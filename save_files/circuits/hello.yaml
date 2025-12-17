@@ -1,0 +1,75 @@
+gates:
+  - class: ANDGate
+    x: -42.0
+    y: -120.0
+    rotation: 270.0
+    num_inputs: 2
+    num_outputs: null
+    select_bits: null
+    state: null
+  - class: InputSwitch
+    x: -135.0
+    y: -104.0
+    rotation: 90.0
+    num_inputs: 2
+    num_outputs: null
+    select_bits: null
+    state: true
+  - class: OutputLED
+    x: -213.0
+    y: -136.0
+    rotation: 90.0
+    num_inputs: 2
+    num_outputs: null
+    select_bits: null
+    state: null
+annotations:
+  - class: TextAnnotation
+    x: 102.0
+    y: 61.0
+    rotation: 0
+    width: 80
+    height: 30
+    text: Sadman
+    font_family: Segoe UI
+    font_size: 14
+    font_bold: true
+    font_italic: false
+    text_color: "#DCDCE1"
+  - class: RectangleAnnotation
+    x: -272.75
+    y: -254.2
+    rotation: 0
+    width: 560
+    height: 392
+    border_width: 5
+    border_color: "#5096FF"
+    border_radius: 0
+connections:
+  - dest_gate: 0
+    dest_input: 0
+    src_gate: 1
+    src_output: 0
+    waypoints:
+      - - -134.0
+        - -155.0
+      - - -59.0
+        - -196.0
+  - dest_gate: 0
+    dest_input: 1
+    src_gate: 1
+    src_output: 0
+    waypoints:
+      - - -101.0
+        - -191.0
+  - dest_gate: 2
+    dest_input: 0
+    src_gate: 0
+    src_output: 0
+    waypoints:
+      - - -64.0
+        - 30.0
+settings:
+  canvas_size: 10000
+  grid_size: 20
+  sim_fps: 60
