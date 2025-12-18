@@ -1,66 +1,7 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+**/__pycache__/
+save_files/
 
-# C extensions
-*.so
-*.pyd
-
-# Distribution / packaging
+# Distribution
 build/
 dist/
-*.egg-info/
-*.egg
-*.whl
-pip-wheel-metadata/
-*.manifest
 *.spec
-
-# PyInstaller
-# keep the repo-friendly spec in source if you want; ignoring build/dist outputs
-# dist/ and build/ above will hide onedir/onefile outputs
-
-# Virtual environments
-venv/
-env/
-.venv/
-ENV/
-
-# Editor/IDE
-.vscode/
-.idea/
-*.sublime-workspace
-*.sublime-project
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Pytest / coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-
-# Type checkers / linters
-.mypy_cache/
-.pylint.d/
-
-# Caches & logs
-.cache/
-logs/
-*.log
-
-# Jupyter
-.ipynb_checkpoints
-
-# Secrets / env files
-.env
-.env.local
-
-# Misc
-*.bak
-*.swp
-
-# Ensure upx folder is tracked intentionally (do not ignore upx-5.0.2-win64/ unless you want to)

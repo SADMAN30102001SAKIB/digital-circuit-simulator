@@ -170,7 +170,11 @@ class PropertyPanel(QDockWidget):
             return
 
         # Update title to show Properties when a gate is selected
-        display_name = self.target_gate.label if getattr(self.target_gate, "label", None) else self.target_gate.name
+        display_name = (
+            self.target_gate.label
+            if getattr(self.target_gate, "label", None)
+            else self.target_gate.name
+        )
         self.setWindowTitle(f"Properties - {display_name}")
 
         # Rotation
@@ -221,12 +225,16 @@ class PropertyPanel(QDockWidget):
 
             # Update title live while editing (do not save every keystroke)
             label_input.textChanged.connect(
-                lambda t, g=self.target_gate: self.setWindowTitle(f"Properties - {t if t.strip() else g.name}")
+                lambda t, g=self.target_gate: self.setWindowTitle(
+                    f"Properties - {t if t.strip() else g.name}"
+                )
             )
 
             # Save on Enter or focus out
             label_input.editingFinished.connect(
-                lambda: self._update_gate_property(self.target_gate, "label", label_input.text())
+                lambda: self._update_gate_property(
+                    self.target_gate, "label", label_input.text()
+                )
             )
 
             label_layout.addWidget(label_input)
