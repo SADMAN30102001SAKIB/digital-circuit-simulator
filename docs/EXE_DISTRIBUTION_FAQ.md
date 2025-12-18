@@ -8,7 +8,7 @@ The exe is a **complete standalone application** containing:
 
 - Python 3.11 runtime
 - PySide6 (Qt framework)
-- All your code (core/, ui/, simulator.py)
+- All your code (core/, ui/, simulator/)
 - All dependencies
 
 ### Distribution Test:
