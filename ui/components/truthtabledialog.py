@@ -18,6 +18,9 @@ class TruthTableDialog(QDialog):
         self.setModal(True)
         self.resize(700, 500)
 
+        # Keep a reference to the original rows so we can clear it on close to free memory
+        self._rows = rows
+
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
@@ -89,3 +92,54 @@ class TruthTableDialog(QDialog):
         QGuiApplication.clipboard().setText(sio.getvalue())
         # Provide feedback
         QMessageBox.information(self, "Copied", "CSV copied to clipboard")
+
+    def _cleanup(self):
+        """Free large in-memory data and Qt widgets to release memory when dialog closes."""
+        try:
+            # Clear underlying rows list if it was passed in
+            if hasattr(self, "_rows") and isinstance(self._rows, list):
+                try:
+                    self._rows.clear()
+                except Exception:
+                    pass
+                try:
+                    del self._rows
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        try:
+            if hasattr(self, "table"):
+                try:
+                    self.table.clearContents()
+                    self.table.setRowCount(0)
+                    self.table.deleteLater()
+                except Exception:
+                    pass
+                try:
+                    del self.table
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        try:
+            import gc
+
+            gc.collect()
+        except Exception:
+            pass
+
+    def accept(self):
+        # Ensure memory is released before dialog is destroyed
+        self._cleanup()
+        return super().accept()
+
+    def reject(self):
+        self._cleanup()
+        return super().reject()
+
+    def closeEvent(self, event):
+        self._cleanup()
+        return super().closeEvent(event)

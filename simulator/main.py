@@ -1,3 +1,4 @@
+import gc
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, Qt, QTimer, Slot
@@ -727,6 +728,21 @@ class CircuitSimulator(QMainWindow):
                     break
 
         if canceled:
+            # Clear any partial rows to free memory
+            try:
+                if isinstance(rows, list):
+                    try:
+                        rows.clear()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            rows = None
+            try:
+                gc.collect()
+            except Exception:
+                pass
+
             QMessageBox.information(
                 self, "Cancelled", "Truth table generation was cancelled."
             )
@@ -757,6 +773,21 @@ class CircuitSimulator(QMainWindow):
 
         dialog = TruthTableDialog(input_names, output_name, rows, parent=self)
         dialog.exec()
+
+        # Clear large in-memory rows list to release memory immediately
+        try:
+            if isinstance(rows, list):
+                try:
+                    rows.clear()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        rows = None
+        try:
+            gc.collect()
+        except Exception:
+            pass
 
         if panel_suspended:
             self.property_panel.resume_updates()
