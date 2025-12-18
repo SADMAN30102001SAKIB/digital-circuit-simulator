@@ -902,6 +902,7 @@ class CircuitSimulator(QMainWindow):
                     gate.select_bits if hasattr(gate, "select_bits") else None
                 ),
                 "state": gate.state if hasattr(gate, "state") else None,
+                "label": getattr(gate, "label", None),
             }
             gates_data.append(gate_dict)
 
@@ -1036,6 +1037,10 @@ class CircuitSimulator(QMainWindow):
             # Set rotation BEFORE adding to canvas so GateItem gets correct value
             rotation_value = gate_data.get("rotation", 0)
             gate.rotation = float(rotation_value) if rotation_value else 0
+
+            # Restore label if present
+            if gate_data.get("label") is not None:
+                gate.label = gate_data.get("label")
 
             if hasattr(gate, "state") and gate_data.get("state") is not None:
                 gate.state = gate_data["state"]

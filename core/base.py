@@ -71,6 +71,7 @@ class Gate:
         self.x = x
         self.y = y
         self.name = name
+        self.label = None  # Optional user-friendly label for inputs/LEDs
         self.width = 80
         self.height = 60
         self.inputs = []

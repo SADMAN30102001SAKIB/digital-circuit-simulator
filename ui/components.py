@@ -170,7 +170,8 @@ class PropertyPanel(QDockWidget):
             return
 
         # Update title to show Properties when a gate is selected
-        self.setWindowTitle(f"Properties - {self.target_gate.name}")
+        display_name = self.target_gate.label if getattr(self.target_gate, "label", None) else self.target_gate.name
+        self.setWindowTitle(f"Properties - {display_name}")
 
         # Rotation
         rot_label = QLabel(f"Rotation: {self.target_gate.rotation}°")
@@ -208,6 +209,29 @@ class PropertyPanel(QDockWidget):
             state_label = QLabel()
             self.live_labels["led_state"] = state_label
             self.layout.addWidget(state_label)
+
+        # Label control (for inputs & LEDs)
+        if self.target_gate.name in ["INPUT", "LED"]:
+            label_group = QGroupBox("Label")
+            label_layout = QVBoxLayout()
+
+            label_input = QLineEdit()
+            label_input.setPlaceholderText("Optional label (e.g. A, Vcc, OUT1)")
+            label_input.setText(self.target_gate.label or "")
+
+            # Update title live while editing (do not save every keystroke)
+            label_input.textChanged.connect(
+                lambda t, g=self.target_gate: self.setWindowTitle(f"Properties - {t if t.strip() else g.name}")
+            )
+
+            # Save on Enter or focus out
+            label_input.editingFinished.connect(
+                lambda: self._update_gate_property(self.target_gate, "label", label_input.text())
+            )
+
+            label_layout.addWidget(label_input)
+            label_group.setLayout(label_layout)
+            self.layout.addWidget(label_group)
 
         # Add spacing
         self.layout.addSpacing(8)
@@ -590,6 +614,39 @@ class PropertyPanel(QDockWidget):
             self.parent().update_window_title()
             if hasattr(canvas, "schedule_save_state"):
                 canvas.schedule_save_state()
+
+    def _notify_gate_change(self, gate):
+        """Notify that a gate (INPUT/LED/etc.) has changed"""
+        if self.parent():
+            canvas = self.parent().canvas
+            if gate in canvas.gate_items:
+                item = canvas.gate_items[gate]
+                # ensure item updates (e.g., title or visual)
+                item.prepareGeometryChange()
+                item.update()
+            # Mark as unsaved and schedule save
+            self.parent().unsaved_changes = True
+            self.parent().update_window_title()
+            if hasattr(canvas, "schedule_save_state"):
+                canvas.schedule_save_state()
+
+    def _update_gate_property(self, gate, prop, value):
+        """Update a gate property (label, etc.) and refresh canvas"""
+        # Treat empty strings as None for labels
+        if isinstance(value, str) and value.strip() == "":
+            value = None
+        setattr(gate, prop, value)
+        # Update the gate item if exists
+        if self.parent():
+            canvas = self.parent().canvas
+            if gate in canvas.gate_items:
+                item = canvas.gate_items[gate]
+                # If gate label changed, the property panel title should update
+                item.update()
+        # Notify parent about the change (saves state)
+        self._notify_gate_change(gate)
+        # Refresh the property display so the title and any controls update immediately
+        self._update_display()
 
     def _add_annotation_rotation_buttons(self):
         """Add rotation buttons for annotations"""
