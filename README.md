@@ -15,6 +15,7 @@ Modern, professional circuit simulator built with PySide6 (Qt for Python).
   - Wire routing with waypoints
   - Dynamic component properties
   - Real-time simulation
+  - **truth-table generator** with a progress dialog and cancel support
 
 ## 📦 Installation
 
@@ -26,7 +27,7 @@ pip install -r requirements.txt
 ## ▶️ Run
 
 ```powershell
-python main.py
+python app.py
 ```
 
 ## 📦 Distribution
@@ -93,8 +94,9 @@ python build.py
 
 ### Main Application
 
-- `simulator.py` - QMainWindow with full simulator logic
-- `main.py` - Entry point
+- `simulator/` **package** — codebase refactored into a small, modular package (`main.py`, `persistence.py`, `truthtable.py`, `utils.py`, `setup.py`) to improve testability and maintainability; `app.py` (at the project root) remains the entry script that starts the app.
+
+- Persistence & format — circuits are saved in **YAML** and the persistence layer now stores stable `uid` values for gates and annotations to preserve selection and history across save/load.
 
 ## 🎨 UI Components
 
@@ -139,4 +141,4 @@ Adjust grid size, zoom limits in `ui/canvas.py`.
 
 - Simulation runs at ~60 FPS (QTimer with 16ms interval)
 - Supports up to 50 undo/redo levels
-- Circuits saved in `saved_files/circuits/` directory
+- Circuits saved in `save_files/circuits/` directory

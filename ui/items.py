@@ -3,7 +3,16 @@ from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsPathItem
 
 from core.base import calculate_rotated_pin_positions
-from ui.theme import *
+from ui.theme import (
+    ACCENT,
+    DANGER,
+    GATE_COLORS,
+    SELECTION,
+    SUCCESS,
+    TEXT_COLOR,
+    WIRE_ACTIVE,
+    WIRE_INACTIVE,
+)
 
 
 class GateItem(QGraphicsItem):

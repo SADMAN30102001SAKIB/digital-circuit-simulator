@@ -30,7 +30,7 @@ The EXE is **Windows-only**. Linux/Mac users should run the Python source:
 
 ```bash
 pip install PySide6
-python main.py
+python app.py
 ```
 
 ---

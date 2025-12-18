@@ -4,7 +4,8 @@ from pathlib import Path
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication
 
-from simulator import CircuitSimulator
+# from simulator import CircuitSimulator
+from simulator.main import CircuitSimulator
 from ui.theme import MODERN_STYLE
 
 

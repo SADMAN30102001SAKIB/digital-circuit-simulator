@@ -60,7 +60,7 @@ def main(argv=None):
         sys.exit(2)
 
     build_args = [
-        "main.py",
+        "app.py",
         f"--name={args.name}",
         "--windowed",
         f"--icon={str(Path('assets/icon.ico').resolve())}",
@@ -135,7 +135,7 @@ def main(argv=None):
         lines.append("# -*- mode: python ; coding: utf-8 -*-")
         lines.append("block_cipher = None")
         lines.append("")
-        main_path_val = str(Path.cwd() / "main.py").replace("\\\\", "/")
+        main_path_val = str(Path.cwd() / "app.py").replace("\\\\", "/")
         project_root_val = str(Path.cwd()).replace("\\\\", "/")
         lines.append(f'main_path = r"{main_path_val}"')
         lines.append(f'project_root = r"{project_root_val}"')

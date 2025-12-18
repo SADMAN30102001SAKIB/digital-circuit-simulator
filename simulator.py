@@ -1,9 +1,16 @@
 from pathlib import Path
 
 import yaml
-from PySide6.QtCore import Qt, QTimer, Slot
+from PySide6.QtCore import QCoreApplication, Qt, QTimer, Slot
 from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox, QStatusBar, QToolBar
+from PySide6.QtWidgets import (
+    QDialog,
+    QMainWindow,
+    QMessageBox,
+    QProgressDialog,
+    QStatusBar,
+    QToolBar,
+)
 
 from core import (
     ANDGate,
@@ -25,16 +32,15 @@ from core import (
     calculate_rotated_pin_positions,
 )
 from ui.canvas import CircuitCanvas
-from ui.components import (
-    ComponentLibrary,
-    ConfirmDialog,
-    FileListDialog,
-    GlobalSettingsDialog,
-    HelpDialog,
-    InputDialog,
-    PropertyPanel,
-    SettingsDialog,
-)
+from ui.components.componentlibrary import ComponentLibrary
+from ui.components.confirmdialog import ConfirmDialog
+from ui.components.filelistdialog import FileListDialog
+from ui.components.globalsettingsdialog import GlobalSettingsDialog
+from ui.components.helpdialog import HelpDialog
+from ui.components.inputdialog import InputDialog
+from ui.components.propertypanel import PropertyPanel
+from ui.components.settingsdialog import SettingsDialog
+from ui.components.truthtabledialog import TruthTableDialog
 
 
 class CircuitSimulator(QMainWindow):
@@ -555,6 +561,10 @@ class CircuitSimulator(QMainWindow):
             self.modify_decoder(self.selected_gate, 1)
         elif action == "decoder_remove":
             self.modify_decoder(self.selected_gate, -1)
+
+        # Truth table generation for LED
+        elif action == "generate_truth_table":
+            self._generate_truth_table_for_selected_led()
 
     def rotate_selected(self, angle):
         """Rotate selected gate or annotation"""
@@ -1171,6 +1181,238 @@ class CircuitSimulator(QMainWindow):
         # Update property panel live values (for INPUT/LED state display)
         if self.selected_gate:
             self.property_panel.update_live_values()
+
+    def _find_source_gate_for_pin(self, pin):
+        """Return the gate that owns the provided output pin, or None"""
+        for g in self.gates:
+            if pin in getattr(g, "outputs", []):
+                return g
+        return None
+
+    def _collect_influencing_inputs(self, start_gate):
+        """Traverse upstream from start_gate and collect all InputSwitch gates that influence it.
+
+        Returns a list of unique InputSwitch gates in deterministic order.
+        """
+        inputs = []
+        visited = set()
+        queue = []
+
+        # Start from the input pins of the start gate
+        for pin in getattr(start_gate, "inputs", []):
+            src = pin.connected_to
+            if not src:
+                continue
+            src_gate = self._find_source_gate_for_pin(src)
+            if src_gate:
+                queue.append(src_gate)
+
+        while queue:
+            g = queue.pop(0)
+            if id(g) in visited:
+                continue
+            visited.add(id(g))
+
+            # If it's an input switch, collect it
+            if isinstance(g, InputSwitch):
+                inputs.append(g)
+                continue
+
+            # Otherwise, add upstream sources
+            for pin in getattr(g, "inputs", []):
+                if pin.connected_to:
+                    src_gate = self._find_source_gate_for_pin(pin.connected_to)
+                    if src_gate and id(src_gate) not in visited:
+                        queue.append(src_gate)
+
+        # Deterministic ordering: sort by label (if present) then by id
+        inputs.sort(key=lambda x: (x.label or "", id(x)))
+        return inputs
+
+    def _generate_truth_table_for_selected_led(self):
+        """Generate truth table for currently selected LED and show dialog.
+
+        This runs a combinational evaluation by brute-force enumerating input combinations.
+        """
+        if not self.selected_gate or self.selected_gate.name != "LED":
+            QMessageBox.warning(
+                self, "Truth Table", "Select an LED to generate its truth table."
+            )
+            return
+
+        led = self.selected_gate
+        inputs = self._collect_influencing_inputs(led)
+
+        if not inputs:
+            QMessageBox.information(
+                self, "Truth Table", "No input switches found upstream of this LED."
+            )
+            return
+
+        n = len(inputs)
+        total = 1 << n
+        if n > 16:
+            resp = QMessageBox.question(
+                self,
+                "Large Truth Table",
+                f"This LED has {n} inputs, which results in {total} rows. Continue?",
+            )
+            if resp != QMessageBox.Yes:
+                return
+
+        # Snapshot state to restore later
+        snapshot = self.get_save_state()
+
+        rows = []
+
+        # Progress dialog
+        progress = QProgressDialog(
+            "Generating truth table...", "Cancel", 0, total, self
+        )
+        progress.setWindowModality(Qt.WindowModal)
+        progress.show()
+
+        max_iters = max(10, len(self.gates) * 3)
+
+        # Suspend property panel updates so the LED state doesn't flicker while we iterate inputs
+        panel_suspended = False
+        if hasattr(self, "property_panel"):
+            self.property_panel.suspend_updates()
+            panel_suspended = True
+
+        any_non_converging = False
+        canceled = False
+        try:
+            for idx in range(total):
+                # Check for user cancel
+                if progress.wasCanceled():
+                    canceled = True
+                    break
+
+                # Set inputs
+                for i, g in enumerate(inputs):
+                    bit = bool((idx >> i) & 1)
+                    if hasattr(g, "state"):
+                        g.state = bit
+                    if getattr(g, "outputs", []):
+                        g.outputs[0].set_value(bit)
+
+                # Stabilize with propagation
+                converged = False
+                for _ in range(max_iters):
+                    # snapshot outputs
+                    prev = []
+                    for gate in self.gates:
+                        for out in getattr(gate, "outputs", []):
+                            prev.append(out.wire.value)
+
+                    for gate in self.gates:
+                        gate.update()
+
+                    after = []
+                    for gate in self.gates:
+                        for out in getattr(gate, "outputs", []):
+                            after.append(out.wire.value)
+
+                    if prev == after:
+                        converged = True
+                        break
+
+                if not converged:
+                    any_non_converging = True
+
+                # Read LED value
+                out_val = (
+                    led.eval()
+                    if hasattr(led, "eval")
+                    else (
+                        led.inputs[0].get_value()
+                        if getattr(led, "inputs", None)
+                        else False
+                    )
+                )
+
+                bits = [bool((idx >> i) & 1) for i in range(n)]
+                rows.append((bits, bool(out_val)))
+
+                progress.setValue(idx + 1)
+                QCoreApplication.processEvents()
+
+        finally:
+            progress.close()
+            # Restore snapshot (property panel already suspended before generation)
+            self.restore_state(snapshot)
+            self.property_panel.gates_list = self.gates
+
+            # Determine a matching gate in the restored state but do NOT set it yet
+            matched = None
+            for g in self.gates:
+                if (
+                    g.__class__ is led.__class__
+                    and getattr(g, "label", None) == getattr(led, "label", None)
+                    and g.x == led.x
+                    and g.y == led.y
+                ):
+                    matched = g
+                    break
+
+        # If user canceled, do not show partial results; re-select after cancel
+        if canceled:
+            QMessageBox.information(
+                self, "Cancelled", "Truth table generation was cancelled."
+            )
+            # Re-select the matched LED (if any) so property panel displays correctly now
+            if matched:
+                self.selected_gate = matched
+                self.selected_annotation = None
+                if panel_suspended:
+                    self.property_panel.resume_updates()
+                self.property_panel.set_target(matched)
+                self.canvas.scene.clearSelection()
+                if matched in self.canvas.gate_items:
+                    self.canvas.gate_items[matched].setSelected(True)
+            else:
+                # resume updates then show component list
+                if panel_suspended:
+                    self.property_panel.resume_updates()
+                self.property_panel.refresh_component_list()
+            return
+        # Warn if any iteration didn't converge
+        if any_non_converging:
+            QMessageBox.warning(
+                self,
+                "Non-converging",
+                "Circuit did not converge for some input combinations; results may be unreliable for sequential circuits.",
+            )
+
+        # Build names
+        input_names = [g.label or f"IN{i+1}" for i, g in enumerate(inputs)]
+        output_name = led.label or "LED"
+
+        # Show dialog (modal). Only after it closes we resume property panel updates and set the target to avoid rendering glitches
+        dialog = TruthTableDialog(input_names, output_name, rows, parent=self)
+        dialog.exec()
+
+        # Resume property panel updates and apply pending target (only if we suspended it)
+        if panel_suspended:
+            self.property_panel.resume_updates()
+
+        # Re-select the matched LED now that the dialog has closed
+        if matched:
+            self.selected_gate = matched
+            self.selected_annotation = None
+            self.property_panel.set_target(matched)
+            self.canvas.scene.clearSelection()
+            if matched in self.canvas.gate_items:
+                self.canvas.gate_items[matched].setSelected(True)
+        else:
+            self.property_panel.refresh_component_list()
+
+        # After dialog closes, re-apply selection to ensure property panel shows only the LED properties
+        if self.selected_gate:
+            self.property_panel.set_target(self.selected_gate)
+        else:
+            self.property_panel.refresh_component_list()
 
     def closeEvent(self, event):
         """Handle window close"""

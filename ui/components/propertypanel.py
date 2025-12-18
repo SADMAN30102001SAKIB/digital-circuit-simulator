@@ -1,9 +1,8 @@
-from PySide6.QtCore import QSize, Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QCheckBox,
     QColorDialog,
-    QDialog,
     QDockWidget,
     QFontComboBox,
     QFrame,
@@ -11,13 +10,10 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
     QSpinBox,
-    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -28,67 +24,6 @@ from core.annotations import (
     RectangleAnnotation,
     TextAnnotation,
 )
-from ui.theme import *
-
-
-class ComponentLibrary(QDockWidget):
-    """Left sidebar with draggable components"""
-
-    componentSelected = Signal(object, str)  # component_class, name
-
-    def __init__(self, components, parent=None):
-        super().__init__("Components", parent)
-
-        # Dock settings
-        self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-        self.setFeatures(
-            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable
-        )
-
-        # Create list widget
-        self.list_widget = QListWidget()
-        self.list_widget.setSpacing(2)
-
-        # Populate with components
-        current_category = None
-        for name, cls, category in components:
-            if category and category != current_category:
-                # Add category header
-                current_category = category
-                header_item = QListWidgetItem(f"  {category}  ")
-                header_item.setFlags(Qt.NoItemFlags)
-                header_item.setBackground(QColor(NAVBAR_BG))
-                header_item.setForeground(QColor(TEXT_DIM))
-                font = QFont("Segoe UI", 10, QFont.Bold)
-                header_item.setFont(font)
-                self.list_widget.addItem(header_item)
-
-            # Add component
-            item = QListWidgetItem(name)
-            item.setData(Qt.UserRole, (cls, name))
-
-            # Set background color
-            color = GATE_COLORS.get(name, ACCENT)
-            item.setBackground(QColor(color))
-            item.setForeground(QColor("#FFFFFF"))
-
-            font = QFont("Segoe UI", 12, QFont.Bold)
-            item.setFont(font)
-            item.setSizeHint(QSize(0, 44))
-
-            self.list_widget.addItem(item)
-
-        # Connect signal
-        self.list_widget.itemClicked.connect(self._on_item_clicked)
-
-        self.setWidget(self.list_widget)
-
-    def _on_item_clicked(self, item):
-        """Handle component selection"""
-        data = item.data(Qt.UserRole)
-        if data:
-            component_class, name = data
-            self.componentSelected.emit(component_class, name)
 
 
 class PropertyPanel(QDockWidget):
@@ -130,6 +65,10 @@ class PropertyPanel(QDockWidget):
         self.annotations_list = []
         self.live_labels = {}
 
+        # Update suspension flag and pending target (used to avoid UI updates while modal dialogs are open)
+        self._suspend_updates = False
+        self._pending_target = None
+
         # Show empty state
         self._show_component_list()
 
@@ -139,7 +78,16 @@ class PropertyPanel(QDockWidget):
         QTimer.singleShot(0, self._prewarm_widgets)
 
     def set_target(self, target):
-        """Set the gate or annotation to display properties for"""
+        """Set the gate or annotation to display properties for
+
+        If updates are suspended (e.g., while a modal dialog is open), record
+        the pending target and avoid updating the UI until resumed.
+        """
+        if self._suspend_updates:
+            # store pending target for later
+            self._pending_target = target
+            return
+
         if isinstance(target, Annotation):
             self.target_annotation = target
             self.target_gate = None
@@ -157,6 +105,10 @@ class PropertyPanel(QDockWidget):
 
     def _update_display(self):
         """Update the property display"""
+        # If suspended, don't modify the UI now
+        if self._suspend_updates:
+            return
+
         self._clear_layout()
 
         # Handle annotation display
@@ -241,6 +193,21 @@ class PropertyPanel(QDockWidget):
             label_group.setLayout(label_layout)
             self.layout.addWidget(label_group)
 
+            # Analysis group (only for LED)
+            if self.target_gate.name == "LED":
+                analysis_group = QGroupBox("Analysis")
+                analysis_layout = QHBoxLayout()
+
+                btn_truth = QPushButton("Generate Truth Table")
+                btn_truth.setProperty("class", "primary")
+                btn_truth.clicked.connect(
+                    lambda: self.actionTriggered.emit("generate_truth_table")
+                )
+                analysis_layout.addWidget(btn_truth)
+
+                analysis_group.setLayout(analysis_layout)
+                self.layout.addWidget(analysis_group)
+
         # Add spacing
         self.layout.addSpacing(8)
 
@@ -306,6 +273,8 @@ class PropertyPanel(QDockWidget):
                 self.target_gate = None
                 self.target_annotation = None
                 self._show_component_list()
+                # Ensure the window title is the default (prewarm may have changed it)
+                self.setWindowTitle("Circuit Components")
             finally:
                 self.target_gate = saved_gate
                 self.target_annotation = saved_annotation
@@ -313,6 +282,19 @@ class PropertyPanel(QDockWidget):
         except Exception as e:
             # Non-fatal; pre-warm should never break normal startup
             print("Warning: prewarm widgets failed:", e)
+
+    def suspend_updates(self):
+        """Suspend UI updates until resume_updates is called. Useful when showing a modal dialog."""
+        self._suspend_updates = True
+
+    def resume_updates(self):
+        """Resume UI updates and apply any pending target that was recorded while suspended."""
+        self._suspend_updates = False
+        # Apply pending target if present
+        if self._pending_target is not None:
+            pending = self._pending_target
+            self._pending_target = None
+            self.set_target(pending)
 
     def _update_annotation_display(self):
         """Update display for annotation properties"""
@@ -653,11 +635,17 @@ class PropertyPanel(QDockWidget):
                 item.update()
         # Notify parent about the change (saves state)
         self._notify_gate_change(gate)
-        # Refresh the property display so the title and any controls update immediately
-        self._update_display()
+        # If updates are suspended, defer display refresh until resume
+        if not self._suspend_updates:
+            self._update_display()
+        else:
+            self._pending_target = gate
 
     def _add_annotation_rotation_buttons(self):
         """Add rotation buttons for annotations"""
+        if self._suspend_updates:
+            return
+
         rot_group = QGroupBox("Rotation")
         rot_layout = QHBoxLayout()
 
@@ -674,6 +662,8 @@ class PropertyPanel(QDockWidget):
 
     def _rotate_annotation(self, angle):
         """Rotate the current annotation"""
+        if self._suspend_updates:
+            return
         if not self.target_annotation:
             return
 
@@ -698,9 +688,17 @@ class PropertyPanel(QDockWidget):
 
     def _add_control_buttons(self):
         """Add control buttons based on gate type"""
+        if self._suspend_updates:
+            return
         if not self.target_gate:
             return
 
+        # Ensure pending target isn't stale (if any)
+        if (
+            self._pending_target is not None
+            and self._pending_target is not self.target_gate
+        ):
+            self._pending_target = None
         # Rotation buttons (all components)
         rot_group = QGroupBox("Rotation")
         rot_layout = QHBoxLayout()
@@ -760,6 +758,10 @@ class PropertyPanel(QDockWidget):
 
     def update_live_values(self):
         """Update live values in property panel"""
+        # Don't update live values when updates are suspended (e.g., during truth-table generation)
+        if self._suspend_updates:
+            return
+
         if not self.target_gate:
             return
 
@@ -782,6 +784,8 @@ class PropertyPanel(QDockWidget):
 
     def refresh_component_list(self):
         """Refresh the component list if it's currently displayed"""
+        if self._suspend_updates:
+            return
         if not self.target_gate and not self.target_annotation:
             self._show_component_list()
 
@@ -823,340 +827,3 @@ class PropertyPanel(QDockWidget):
                     )
                 )
                 self.layout.addWidget(btn)
-
-
-class InputDialog(QDialog):
-    """Modern input dialog"""
-
-    def __init__(self, title, placeholder="", parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        self.setMinimumWidth(400)
-
-        # Layout
-        layout = QVBoxLayout()
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # Input field
-        self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText(placeholder)
-        self.input_field.returnPressed.connect(self.accept)
-        layout.addWidget(self.input_field)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        btn_cancel = QPushButton("Cancel")
-        btn_cancel.setProperty("class", "danger")
-        btn_cancel.clicked.connect(self.reject)
-        button_layout.addWidget(btn_cancel)
-
-        btn_ok = QPushButton("OK")
-        btn_ok.setProperty("class", "success")
-        btn_ok.clicked.connect(self.accept)
-        btn_ok.setDefault(True)
-        button_layout.addWidget(btn_ok)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-    def get_text(self):
-        """Get the entered text"""
-        return self.input_field.text()
-
-
-class FileListDialog(QDialog):
-    """Dialog to select from a list of files"""
-
-    def __init__(self, title, file_list, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        self.setMinimumSize(500, 400)
-
-        # Layout
-        layout = QVBoxLayout()
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # List
-        self.list_widget = QListWidget()
-        for file in file_list:
-            item = QListWidgetItem(file.stem)
-            item.setData(Qt.UserRole, file)
-            self.list_widget.addItem(item)
-
-        self.list_widget.itemDoubleClicked.connect(self.accept)
-        layout.addWidget(self.list_widget)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        btn_cancel = QPushButton("Cancel")
-        btn_cancel.setProperty("class", "danger")
-        btn_cancel.clicked.connect(self.reject)
-        button_layout.addWidget(btn_cancel)
-
-        btn_load = QPushButton("Load")
-        btn_load.setProperty("class", "success")
-        btn_load.clicked.connect(self.accept)
-        btn_load.setDefault(True)
-        button_layout.addWidget(btn_load)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-    def get_selected_file(self):
-        """Get the selected file"""
-        current = self.list_widget.currentItem()
-        if current:
-            return current.data(Qt.UserRole)
-        return None
-
-
-class ConfirmDialog(QDialog):
-    """Confirmation dialog"""
-
-    def __init__(self, title, message, yes_text="Yes", no_text="No", parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        self.setMinimumWidth(400)
-
-        # Layout
-        layout = QVBoxLayout()
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # Message
-        message_label = QLabel(message)
-        message_label.setWordWrap(True)
-        layout.addWidget(message_label)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        btn_no = QPushButton(no_text)
-        btn_no.setProperty("class", "danger")
-        btn_no.clicked.connect(self.reject)
-        button_layout.addWidget(btn_no)
-
-        btn_yes = QPushButton(yes_text)
-        btn_yes.setProperty("class", "success")
-        btn_yes.clicked.connect(self.accept)
-        btn_yes.setDefault(True)
-        button_layout.addWidget(btn_yes)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-
-class SettingsDialog(QDialog):
-    """Settings dialog for canvas and simulation options"""
-
-    def __init__(self, canvas_size, grid_size, sim_fps, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Settings")
-        self.setModal(True)
-        self.setMinimumWidth(400)
-
-        layout = QVBoxLayout()
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        title_label = QLabel("Settings")
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # Canvas Size
-        canvas_group = QGroupBox("Canvas")
-        canvas_layout = QVBoxLayout()
-
-        size_layout = QHBoxLayout()
-        size_layout.addWidget(QLabel("Canvas Size (10000 - 50000):"))
-        self.canvas_size_spin = QSpinBox()
-        self.canvas_size_spin.setRange(10000, 50000)
-        self.canvas_size_spin.setSingleStep(5000)
-        self.canvas_size_spin.setValue(canvas_size)
-        self.canvas_size_spin.setSuffix(" px")
-        size_layout.addWidget(self.canvas_size_spin)
-        canvas_layout.addLayout(size_layout)
-
-        grid_layout = QHBoxLayout()
-        grid_layout.addWidget(QLabel("Grid Size (10 - 100):"))
-        self.grid_size_spin = QSpinBox()
-        self.grid_size_spin.setRange(10, 100)
-        self.grid_size_spin.setSingleStep(10)
-        self.grid_size_spin.setValue(grid_size)
-        self.grid_size_spin.setSuffix(" px")
-        grid_layout.addWidget(self.grid_size_spin)
-        canvas_layout.addLayout(grid_layout)
-
-        canvas_group.setLayout(canvas_layout)
-        layout.addWidget(canvas_group)
-
-        # Simulation
-        sim_group = QGroupBox("Simulation")
-        sim_layout = QHBoxLayout()
-        sim_layout.addWidget(QLabel("Update Rate (15 - 120):"))
-        self.fps_spin = QSpinBox()
-        self.fps_spin.setRange(15, 120)
-        self.fps_spin.setSingleStep(10)
-        self.fps_spin.setValue(sim_fps)
-        self.fps_spin.setSuffix(" FPS")
-        sim_layout.addWidget(self.fps_spin)
-        sim_group.setLayout(sim_layout)
-        layout.addWidget(sim_group)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        btn_cancel = QPushButton("Cancel")
-        btn_cancel.setProperty("class", "danger")
-        btn_cancel.clicked.connect(self.reject)
-        button_layout.addWidget(btn_cancel)
-
-        btn_apply = QPushButton("Apply")
-        btn_apply.setProperty("class", "success")
-        btn_apply.clicked.connect(self.accept)
-        btn_apply.setDefault(True)
-        button_layout.addWidget(btn_apply)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-    def get_values(self):
-        """Return (canvas_size, grid_size, fps)"""
-        return (
-            self.canvas_size_spin.value(),
-            self.grid_size_spin.value(),
-            self.fps_spin.value(),
-        )
-
-
-class GlobalSettingsDialog(QDialog):
-    """Global settings dialog for app-wide configuration"""
-
-    def __init__(self, history_limit, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Global Settings")
-        self.setModal(True)
-        self.setMinimumWidth(400)
-
-        layout = QVBoxLayout()
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        title_label = QLabel("Global Settings")
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # Global Options
-        settings_group = QGroupBox("Application")
-        settings_layout = QHBoxLayout()
-
-        settings_layout.addWidget(QLabel("Undo/Redo History Limit (10 - 200):"))
-        self.history_spin = QSpinBox()
-        self.history_spin.setRange(10, 200)
-        self.history_spin.setSingleStep(10)
-        self.history_spin.setValue(history_limit)
-        settings_layout.addWidget(self.history_spin)
-
-        settings_group.setLayout(settings_layout)
-        layout.addWidget(settings_group)
-
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-
-        btn_cancel = QPushButton("Cancel")
-        btn_cancel.setProperty("class", "danger")
-        btn_cancel.clicked.connect(self.reject)
-        button_layout.addWidget(btn_cancel)
-
-        btn_save = QPushButton("Save")
-        btn_save.setProperty("class", "success")
-        btn_save.clicked.connect(self.accept)
-        btn_save.setDefault(True)
-        button_layout.addWidget(btn_save)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-    def get_values(self):
-        """Return (history_limit)"""
-        return self.history_spin.value()
-
-
-class HelpDialog(QDialog):
-    """Custom help dialog with scrollable content"""
-
-    def __init__(self, title, content, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        self.resize(600, 500)
-
-        # Layout
-        layout = QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
-
-        # Title
-        title_label = QLabel(title)
-        title_label.setProperty("class", "title")
-        layout.addWidget(title_label)
-
-        # Content content
-        browser = QTextBrowser()
-        browser.setHtml(content)
-        browser.setOpenExternalLinks(True)
-        # Style the browser to match theme
-        browser.setStyleSheet(
-            """
-            QTextBrowser {
-                background-color: #28292E;
-                color: #DCDCE1;
-                border: 2px solid #3C3E44;
-                border-radius: 6px;
-                padding: 12px;
-                font-size: 14px;
-            }
-        """
-        )
-        layout.addWidget(browser)
-
-        # Close button
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
-
-        btn_close = QPushButton("Close")
-        btn_close.setProperty("class", "success")
-        btn_close.clicked.connect(self.accept)
-        btn_layout.addWidget(btn_close)
-
-        layout.addLayout(btn_layout)
-        self.setLayout(layout)

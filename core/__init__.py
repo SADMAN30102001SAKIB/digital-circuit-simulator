@@ -1,13 +1,10 @@
 from .advanced import Decoder, Demultiplexer, Encoder, Multiplexer
-from .annotations import Annotation, CircleAnnotation, RectangleAnnotation, TextAnnotation
-from .base import Gate, Pin, Wire, calculate_rotated_pin_positions
+from .annotations import CircleAnnotation, RectangleAnnotation, TextAnnotation
+from .base import calculate_rotated_pin_positions
 from .io import InputSwitch, OutputLED
 from .logic_gates import ANDGate, NANDGate, NORGate, NOTGate, ORGate, XNORGate, XORGate
 
 __all__ = [
-    "Wire",
-    "Pin",
-    "Gate",
     "calculate_rotated_pin_positions",
     "ANDGate",
     "ORGate",
@@ -22,9 +19,7 @@ __all__ = [
     "Decoder",
     "InputSwitch",
     "OutputLED",
-    "Annotation",
     "TextAnnotation",
     "RectangleAnnotation",
     "CircleAnnotation",
 ]
-
