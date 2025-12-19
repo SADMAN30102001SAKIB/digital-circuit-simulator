@@ -137,6 +137,36 @@ Edit `ui/theme.py` to customize colors and QSS styles.
 
 Adjust grid size, zoom limits in `ui/canvas.py`.
 
+## Case Study: Large Truth-Table Memory (>2^16 rows) 💾
+
+**Problem:** Generating very large truth tables (e.g., 16 inputs → 65,536 rows) produced a large process Resident Set Size (RSS is the amount of physical RAM a process currently occupies) spike while the table was displayed (observed peaks ≈ 800+ MB for 65K+ rows) and could leave elevated memory after the dialog was closed in earlier builds.
+
+**Reproduction (quick):**
+
+- Create an LED driven by 16 `INPUT` switches and use **Generate Truth Table** for that LED.
+- Watch the process RSS in Task Manager while the table is shown.
+
+**Findings:**
+
+- The root cause is the item-based approach: `QTableWidget` creates a `QTableWidgetItem` for every cell which results in large Qt/C++ allocations (table internals, render caches, etc.).
+- Clearing Python references alone wasn't enough to bring RSS back to the pre‑Qt baseline because some memory is held in C++ allocator pools and Qt caches.
+
+**Mitigations / fixes applied:**
+
+- `simulator/main.py`:
+
+  - Import `gc` and, on Cancel or after the truth-table dialog returns, clear any partial `rows` list (if present), set `rows = None`, and call `gc.collect()` so Python references are released promptly.
+
+- `ui/components/truthtabledialog.py`:
+  - Store the original rows reference in `self._rows` in `__init__`.
+  - Added a `_cleanup()` method that clears `self._rows` (if a list), deletes the attribute, clears and `deleteLater()`s the `QTableWidget`, deletes `self.table`, and calls `gc.collect()`.
+  - Hooked `_cleanup()` into `accept()`, `reject()` and `closeEvent()` so cleanup runs regardless of how the dialog is closed.
+
+**Observed results:**
+
+- Peak memory while the table is shown: ~800 MB (example run).
+- After safe cleanup + GC the process RSS dropped significantly in tests (often to ≈ 90–100 MB).
+
 ## 📝 Notes
 
 - Simulation runs at ~60 FPS (QTimer with 16ms interval)

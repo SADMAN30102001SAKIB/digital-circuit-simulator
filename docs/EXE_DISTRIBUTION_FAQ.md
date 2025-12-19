@@ -115,7 +115,7 @@ Compress-Archive -Path "dist\CircuitPlaygroundPro.exe" -DestinationPath "Circuit
 ### 2. Include README
 
 ```
-CircuitPlaygroundPro_v2.0.zip:
+CircuitPlaygroundPro_v2.1.zip:
 ├── CircuitPlaygroundPro.exe
 └── README.txt  (from DISTRIBUTION_README.txt)
 ```
