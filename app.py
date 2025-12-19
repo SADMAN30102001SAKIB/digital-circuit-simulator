@@ -36,7 +36,7 @@ def main():
     # Set application info
     app.setApplicationName("Circuit Playground Pro")
     app.setOrganizationName("Circuit Simulator")
-    app.setApplicationVersion("2.1.0")
+    app.setApplicationVersion("3.0.0")
 
     # Create and show main window
     window = CircuitSimulator()

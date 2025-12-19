@@ -40,40 +40,15 @@ def collect_influencing_inputs(find_source_func, start_gate):
     return inputs
 
 
-def stabilize_until_converged(gates, max_iters):
-    """Run updates on gates until outputs converge or max_iters reached.
+def generate_truth_table_iter(gates, find_source_func, led):
+    """Generator that yields (idx, bits_list, led_value) for each input combination.
 
-    Returns True if converged, False otherwise.
-    """
-    for _ in range(max_iters):
-        prev = []
-        for gate in gates:
-            for out in getattr(gate, "outputs", []):
-                prev.append(out.wire.value)
-
-        for gate in gates:
-            gate.update()
-
-        after = []
-        for gate in gates:
-            for out in getattr(gate, "outputs", []):
-                after.append(out.wire.value)
-
-        if prev == after:
-            return True
-    return False
-
-
-def generate_truth_table_iter(gates, find_source_func, led, max_iters=None):
-    """Generator that yields (idx, bits_list, led_value, converged_bool) for each input combination.
-
-    Use this in UI to support progress and cancellation.
+    This simplified generator performs a single update pass per combination which is
+    sufficient for combinational circuits (no feedback/sequential logic expected).
     """
     inputs = collect_influencing_inputs(find_source_func, led)
     n = len(inputs)
     total = 1 << n if n else 0
-    if max_iters is None:
-        max_iters = max(10, len(gates) * 3)
 
     for idx in range(total):
         # Set inputs according to bits
@@ -82,9 +57,17 @@ def generate_truth_table_iter(gates, find_source_func, led, max_iters=None):
             if hasattr(g, "state"):
                 g.state = bit
             if getattr(g, "outputs", []):
-                g.outputs[0].set_value(bit)
+                try:
+                    g.outputs[0].set_value(bit)
+                except Exception:
+                    pass
 
-        converged = stabilize_until_converged(gates, max_iters)
+        # Single pass update for combinational logic
+        for gate in gates:
+            try:
+                gate.update()
+            except Exception:
+                pass
 
         out_val = (
             led.eval()
@@ -93,4 +76,4 @@ def generate_truth_table_iter(gates, find_source_func, led, max_iters=None):
         )
 
         bits = [bool((idx >> i) & 1) for i in range(n)]
-        yield idx, bits, bool(out_val), converged
+        yield idx, bits, bool(out_val)

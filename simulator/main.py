@@ -673,47 +673,47 @@ class CircuitSimulator(QMainWindow):
         # Snapshot state to restore later (must be taken BEFORE generation)
         snapshot = self.get_save_state()
 
-        # Progress dialog
-        from PySide6.QtWidgets import QProgressDialog
-
-        progress = QProgressDialog(
-            "Generating truth table...", "Cancel", 0, total, self
-        )
-        progress.setWindowModality(Qt.WindowModal)
-        progress.show()
-        cancel_btn = progress.findChild(QPushButton)
-        if cancel_btn:
-            cancel_btn.setFixedHeight(24)
-            cancel_btn.setStyleSheet("padding:2px 8px; font-size:10px;")
-
-        # Suspend property panel updates so the LED state doesn't flicker
+        # Suspend property panel updates and pause simulation so the model can
+        # compute on the live gate objects without visual flicker.
         panel_suspended = False
+        sim_was_running = False
         if hasattr(self, "property_panel"):
             self.property_panel.suspend_updates()
             panel_suspended = True
-
-        # Run generator incrementally so we can update progress and respond to Cancel
-        rows = []
-        any_non_converging = False
-        canceled = False
         try:
-            gen = generate_truth_table_iter(
-                self.gates, self._find_source_gate_for_pin, led
+            # If the timer was running, stop it and remember to restart later
+            sim_was_running = bool(self.sim_timer.isActive())
+            if sim_was_running:
+                self.sim_timer.stop()
+        except Exception:
+            sim_was_running = False
+
+        # Build a virtual model (will compute rows on demand)
+        from ui.components.truthtablemodel import VirtualTruthTableModel
+
+        model = VirtualTruthTableModel(
+            self.gates, self._find_source_gate_for_pin, led, inputs=inputs
+        )
+
+        input_names = [g.label or f"IN{i+1}" for i, g in enumerate(inputs)]
+        output_name = led.label or "LED"
+
+        try:
+            dialog = TruthTableDialog(
+                input_names, output_name, model=model, parent=self
             )
-            for idx, bits, out_val, converged in gen:
-                if progress.wasCanceled():
-                    canceled = True
-                    break
-                rows.append((bits, out_val))
-                if not converged:
-                    any_non_converging = True
-                progress.setValue(idx + 1)
-                QCoreApplication.processEvents()
+            dialog.exec()
         finally:
-            progress.close()
-            # Restore original snapshot
+            # Restore original snapshot and UI state
             self.restore_state(snapshot)
             self.property_panel.gates_list = self.gates
+            if panel_suspended:
+                self.property_panel.resume_updates()
+            if sim_was_running:
+                try:
+                    self.sim_timer.start(1000 // self.sim_fps)
+                except Exception:
+                    pass
 
             # Find matched gate in restored state
             matched = None
@@ -726,71 +726,6 @@ class CircuitSimulator(QMainWindow):
                 ):
                     matched = g
                     break
-
-        if canceled:
-            # Clear any partial rows to free memory
-            try:
-                if isinstance(rows, list):
-                    try:
-                        rows.clear()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-            rows = None
-            try:
-                gc.collect()
-            except Exception:
-                pass
-
-            QMessageBox.information(
-                self, "Cancelled", "Truth table generation was cancelled."
-            )
-            if matched:
-                self.selected_gate = matched
-                self.selected_annotation = None
-                if panel_suspended:
-                    self.property_panel.resume_updates()
-                self.property_panel.set_target(matched)
-                self.canvas.scene.clearSelection()
-                if matched in self.canvas.gate_items:
-                    self.canvas.gate_items[matched].setSelected(True)
-            else:
-                if panel_suspended:
-                    self.property_panel.resume_updates()
-                self.property_panel.refresh_component_list()
-            return
-
-        if any_non_converging:
-            QMessageBox.warning(
-                self,
-                "Non-converging",
-                "Circuit did not converge for some input combinations; results may be unreliable for sequential circuits.",
-            )
-
-        input_names = [g.label or f"IN{i+1}" for i, g in enumerate(inputs)]
-        output_name = led.label or "LED"
-
-        dialog = TruthTableDialog(input_names, output_name, rows, parent=self)
-        dialog.exec()
-
-        # Clear large in-memory rows list to release memory immediately
-        try:
-            if isinstance(rows, list):
-                try:
-                    rows.clear()
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        rows = None
-        try:
-            gc.collect()
-        except Exception:
-            pass
-
-        if panel_suspended:
-            self.property_panel.resume_updates()
 
         if matched:
             self.selected_gate = matched

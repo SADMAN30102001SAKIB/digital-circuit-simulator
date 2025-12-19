@@ -109,13 +109,13 @@ dist/CircuitPlaygroundPro.exe
 ### 1. Create ZIP for Distribution
 
 ```powershell
-Compress-Archive -Path "dist\CircuitPlaygroundPro.exe" -DestinationPath "CircuitPlaygroundPro_v2.0.zip"
+Compress-Archive -Path "dist\CircuitPlaygroundPro.exe" -DestinationPath "CircuitPlaygroundPro_v3.0.zip"
 ```
 
 ### 2. Include README
 
 ```
-CircuitPlaygroundPro_v2.1.zip:
+CircuitPlaygroundPro_v3.0.zip:
 ├── CircuitPlaygroundPro.exe
 └── README.txt  (from DISTRIBUTION_README.txt)
 ```

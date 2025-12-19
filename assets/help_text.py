@@ -61,5 +61,5 @@ ABOUT_TEXT = """
 
 <p>Build and test digital logic circuits with gates like AND, OR, NOT, XOR, NAND, NOR, XNOR, MUX, DEMUX, Encoder, and Decoder.</p>
 
-<p><b>Version:</b> 2.1.0</p>
+<p><b>Version:</b> 3.0.0</p>
 """

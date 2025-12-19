@@ -1,3 +1,5 @@
+import logging
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -10,16 +12,30 @@ from PySide6.QtWidgets import (
 
 
 class TruthTableDialog(QDialog):
-    """Dialog that displays a generated truth table and offers CSV export"""
+    """Dialog that displays a generated truth table and offers CSV export.
 
-    def __init__(self, input_names, output_name, rows, parent=None):
+    This dialog is model-driven: pass a `QAbstractTableModel` (`model`) which
+    lazily provides rows and keeps memory usage low for very large truth tables.
+    """
+
+    def __init__(self, input_names, output_name, model, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Truth Table")
         self.setModal(True)
-        self.resize(700, 500)
+        self.resize(900, 600)
 
-        # Keep a reference to the original rows so we can clear it on close to free memory
-        self._rows = rows
+        # Model is required (no in-memory fallback)
+        if model is None:
+            raise ValueError("TruthTableDialog requires a `model` instance")
+        self._model = model
+        self._temp_csv = None
+
+        # Export state trackers (used to allow safe cleanup when an export is active)
+        self._export_in_progress = False
+        self._export_cancel_requested = False
+        self._export_file_handle = None
+        self._exporting_path = None
+        self._closing = False
 
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
@@ -29,44 +45,48 @@ class TruthTableDialog(QDialog):
         title_label.setProperty("class", "title")
         layout.addWidget(title_label)
 
-        # Table
-        from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
+        # Table area
+        from PySide6.QtWidgets import QTableView
 
-        cols = len(input_names) + 1
-        table = QTableWidget()
-        table.setColumnCount(cols)
-        table.setRowCount(len(rows))
         headers = list(input_names) + [output_name]
-        table.setHorizontalHeaderLabels(headers)
 
-        for r, (bits, outv) in enumerate(rows):
-            for c, b in enumerate(bits):
-                item = QTableWidgetItem("1" if b else "0")
-                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                item.setTextAlignment(Qt.AlignCenter)
-                table.setItem(r, c, item)
-            item = QTableWidgetItem("1" if outv else "0")
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-            item.setTextAlignment(Qt.AlignCenter)
-            table.setItem(r, cols - 1, item)
+        # Virtual model (required)
+        from PySide6.QtWidgets import QHeaderView
 
-        # Center header labels
-        table.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
+        table_view = QTableView()
+        table_view.setModel(model)
 
-        # Expose table for tests
-        self.table = table
+        # Center header alignment and set compact, fixed column width suitable for bits
+        h = table_view.horizontalHeader()
+        h.setDefaultAlignment(Qt.AlignCenter)
+        h.setDefaultSectionSize(36)  # small, bit-friendly width
+        try:
+            h.setSectionResizeMode(QHeaderView.Fixed)
+        except Exception:
+            # Fall back if method unavailable in this Qt binding/version
+            pass
 
-        table.resizeColumnsToContents()
-        layout.addWidget(table)
+        # Show vertical row numbers (1-based) and center them
+        v = table_view.verticalHeader()
+        v.setVisible(True)
+        v.setDefaultAlignment(Qt.AlignCenter)
+        v.setDefaultSectionSize(20)
 
-        # Buttons: Copy CSV and Close
+        # Expose for tests
+        self.table = table_view
+        layout.addWidget(table_view)
+
+        # Buttons: Export and Close
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
-        btn_copy = QPushButton("Copy CSV")
-        btn_copy.setProperty("class", "primary")
-        btn_copy.clicked.connect(lambda: self._copy_csv(input_names, output_name, rows))
-        btn_layout.addWidget(btn_copy)
+        # Export and preview actions (model-driven)
+        btn_export = QPushButton("Export CSV")
+        btn_export.setProperty("class", "primary")
+        btn_export.clicked.connect(self._export_csv)
+        # Expose for tests / to allow disabling during export
+        self._btn_export = btn_export
+        btn_layout.addWidget(btn_export)
 
         btn_close = QPushButton("Close")
         btn_close.setProperty("class", "success")
@@ -76,60 +96,389 @@ class TruthTableDialog(QDialog):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
-    def _copy_csv(self, input_names, output_name, rows):
-        # Build CSV string and copy to clipboard
+    def _export_csv(self):
+        """Export CSV using a chunked main-thread worker with a modal progress dialog.
+
+        This performs export in small timed chunks via QTimer to keep the UI
+        responsive and avoid unsafe cross-thread access to model/UI state.
+        The model provides `get_row(idx)` and `snapshot_cache_keys()` to keep
+        the dialog ignorant of model internals.
+        """
+        import os
+        import tempfile
+        from datetime import datetime
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QProgressDialog
+
+        model = getattr(self, "_model", None)
+        if model is None:
+            QMessageBox.information(
+                self, "Export Unavailable", "No model available to export."
+            )
+            return
+
+        # Prevent concurrent exports
+        if getattr(self, "_export_in_progress", False):
+            QMessageBox.information(
+                self, "Export In Progress", "An export is already in progress."
+            )
+            return
+
+        # Determine destination: Downloads if writable, otherwise a temporary file
+        downloads_dir = None
+        try:
+            home = Path.home()
+            candidate = home / "Downloads"
+            if (
+                candidate.exists()
+                and candidate.is_dir()
+                and os.access(candidate, os.W_OK)
+            ):
+                downloads_dir = candidate
+        except Exception:
+            downloads_dir = None
+
+        if downloads_dir:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"truth_table_{timestamp}.csv"
+            dest = downloads_dir / filename
+            counter = 0
+            while dest.exists():
+                counter += 1
+                dest = downloads_dir / f"truth_table_{timestamp}_{counter}.csv"
+            path = str(dest)
+            saved_in_downloads = True
+        else:
+            tf = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+            path = tf.name
+            tf.close()
+            saved_in_downloads = False
+
+        # Chunked exporter (main-thread): iterate rows in small batches to avoid
+        # touching Qt objects from worker threads (which can hang) and keep the UI
+        # responsive without complex timer-based scheduling.
         import csv
-        from io import StringIO
 
-        from PySide6.QtGui import QGuiApplication
+        from PySide6.QtCore import QTimer
 
-        sio = StringIO()
-        writer = csv.writer(sio)
-        writer.writerow(list(input_names) + [output_name])
-        for bits, outv in rows:
-            writer.writerow(["1" if b else "0" for b in bits] + ["1" if outv else "0"])
+        total = model.rowCount()
 
-        QGuiApplication.clipboard().setText(sio.getvalue())
-        # Provide feedback
-        QMessageBox.information(self, "Copied", "CSV copied to clipboard")
+        # Use an exact progress max from the start to prevent Qt from behaving oddly
+        progress = QProgressDialog("Exporting CSV...", "Cancel", 0, total, self)
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setAutoReset(False)
+        progress.setAutoClose(False)
+        progress.show()
+
+        batch = max(256, min(4096, total // 64 or 256))
+        idx = 0
+        # No per-row cache statistics are shown to the user; keep export simple
+        # (the model still exposes `get_row(idx)` which the dialog uses).
+
+        # Export lifecycle flags stored on the dialog so _cleanup() can observe them
+        self._export_in_progress = True
+        self._export_cancel_requested = False
+        self._export_file_handle = None
+        self._exporting_path = path
+        self._closing = False
+
+        # Disable export button immediately to prevent double-starts
+        try:
+            self._btn_export.setEnabled(False)
+        except Exception:
+            logging.exception("Failed to disable export button")
+
+        # Helper to centralize finalization/cleanup of export state
+        def _finalize_export(remove_temp=False):
+            try:
+                if getattr(self, "_export_file_handle", None):
+                    try:
+                        self._export_file_handle.close()
+                    except Exception:
+                        logging.exception("Failed closing export file")
+                    self._export_file_handle = None
+            except Exception:
+                logging.exception("Error during export file finalize")
+            try:
+                try:
+                    progress.close()
+                except Exception:
+                    logging.exception("Failed to close progress dialog")
+            finally:
+                try:
+                    self._btn_export.setEnabled(True)
+                except Exception:
+                    logging.exception("Failed to re-enable export button")
+                try:
+                    self._export_in_progress = False
+                except Exception:
+                    logging.exception(
+                        "Failed to clear _export_in_progress flag in finalize"
+                    )
+            if remove_temp and not saved_in_downloads:
+                try:
+                    os.remove(path)
+                except Exception:
+                    logging.exception("Failed to remove temporary export file")
+
+        try:
+            f = open(path, "w", newline="")
+            # expose open file for cleanup during dialog close
+            self._export_file_handle = f
+            writer = csv.writer(f)
+            headers = [g.label or f"IN{i+1}" for i, g in enumerate(model.inputs)] + [
+                model.led.label or "LED"
+            ]
+            writer.writerow(headers)
+        except Exception as e:
+            logging.exception("Failed to open export file %s", path)
+            _finalize_export(remove_temp=not saved_in_downloads)
+            QTimer.singleShot(
+                0,
+                lambda: QMessageBox.warning(
+                    self, "Export Failed", f"Export failed: {e}"
+                ),
+            )
+            return
+
+        def _on_cancel():
+            # Ignore cancel requests if we're already closing or not exporting
+            if self._closing or not getattr(self, "_export_in_progress", False):
+                return
+            self._export_cancel_requested = True
+
+        progress.canceled.connect(_on_cancel)
+
+        def process_chunk():
+            nonlocal idx
+            try:
+                # If dialog is closing, abort processing promptly
+                if getattr(self, "_closing", False):
+                    try:
+                        if getattr(self, "_export_file_handle", None):
+                            self._export_file_handle.close()
+                    except Exception:
+                        logging.exception(
+                            "Failed closing export_file_handle during dialog close"
+                        )
+                    try:
+                        self._export_in_progress = False
+                    except Exception:
+                        logging.exception(
+                            "Failed clearing _export_in_progress flag during dialog close"
+                        )
+                    return
+
+                limit = min(batch, total - idx)
+                for _ in range(limit):
+                    if getattr(self, "_export_cancel_requested", False):
+                        break
+                    # Prefer public accessor; get_row returns (bits, out_val, was_cached)
+                    try:
+                        bits, out_val, was_cached = model.get_row(idx)
+                    except Exception:
+                        # Fallback (robust): try internal method
+                        try:
+                            bits, out_val = model._ensure_cached(idx)
+                            was_cached = False
+                        except Exception:
+                            bits, out_val = [], False
+                            was_cached = False
+
+                    writer.writerow(
+                        ["1" if b else "0" for b in bits] + ["1" if out_val else "0"]
+                    )
+                    idx += 1
+
+                try:
+                    progress.setValue(idx)
+                    try:
+                        progress.setLabelText(f"Exporting CSV... ({idx}/{total})")
+                    except Exception:
+                        pass
+                except Exception:
+                    logging.exception("Failed updating progress")
+
+                if idx < total and not getattr(self, "_export_cancel_requested", False):
+                    QTimer.singleShot(0, process_chunk)
+                    return
+
+                # Done or cancelled
+                try:
+                    progress.canceled.disconnect(_on_cancel)
+                except Exception:
+                    logging.exception("Failed disconnecting cancel handler")
+
+                if getattr(self, "_export_cancel_requested", False):
+                    _finalize_export(remove_temp=not saved_in_downloads)
+                    QTimer.singleShot(
+                        0,
+                        lambda: QMessageBox.information(
+                            self, "Cancelled", "CSV export cancelled"
+                        ),
+                    )
+                    return
+
+                # Success: finalize but keep file
+                _finalize_export(remove_temp=False)
+
+                # Success: save stats and ask to open file on next tick
+                try:
+                    model._last_export_stats = {"total": total}
+                except Exception:
+                    logging.exception("Failed to set last_export_stats on model")
+                # mark export finished, let _cleanup know state
+                try:
+                    self._export_in_progress = False
+                    self._export_file_handle = None
+                    self._exporting_path = path
+                except Exception:
+                    logging.exception("Failed to clear export flags after success")
+
+                def _ask_open():
+                    resp = QMessageBox.question(
+                        self, "Exported", f"CSV exported to\n{Path(path)}\n\nOpen file?"
+                    )
+                    if resp == QMessageBox.Yes:
+                        try:
+                            from PySide6.QtCore import QUrl
+                            from PySide6.QtGui import QDesktopServices
+
+                            if QDesktopServices.openUrl(QUrl.fromLocalFile(path)):
+                                return
+                        except Exception:
+                            pass
+
+                        try:
+                            os.startfile(path)
+                            return
+                        except Exception:
+                            try:
+                                import subprocess
+
+                                subprocess.Popen(["xdg-open", path])
+                                return
+                            except Exception:
+                                pass
+
+                        QMessageBox.warning(
+                            self, "Open Failed", "Unable to open CSV file"
+                        )
+                    else:
+                        if not saved_in_downloads:
+                            self._temp_csv = path
+                        else:
+                            self._exported_path = path
+
+                QTimer.singleShot(0, _ask_open)
+            except Exception as e:
+                logging.exception("Exception during export: %s", e)
+                _finalize_export(remove_temp=not saved_in_downloads)
+                QTimer.singleShot(
+                    0,
+                    lambda: QMessageBox.warning(
+                        self, "Export Failed", f"Export failed: {e}"
+                    ),
+                )
+
+        # Kick off chunked processing
+        QTimer.singleShot(0, process_chunk)
 
     def _cleanup(self):
         """Free large in-memory data and Qt widgets to release memory when dialog closes."""
-        try:
-            # Clear underlying rows list if it was passed in
-            if hasattr(self, "_rows") and isinstance(self._rows, list):
-                try:
-                    self._rows.clear()
-                except Exception:
-                    pass
-                try:
-                    del self._rows
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        # No in-memory rows are stored; nothing to clear here.
 
         try:
             if hasattr(self, "table"):
                 try:
-                    self.table.clearContents()
-                    self.table.setRowCount(0)
-                    self.table.deleteLater()
+                    # Detach model and delete the view (QTableView cleanup)
+                    try:
+                        self.table.setModel(None)
+                    except Exception:
+                        logging.exception("Failed to detach model from table")
+                    try:
+                        self.table.deleteLater()
+                    except Exception:
+                        logging.exception("Failed to delete table view")
                 except Exception:
-                    pass
+                    logging.exception("Error during table teardown")
                 try:
                     del self.table
                 except Exception:
-                    pass
+                    logging.exception("Failed to delete table attribute")
+        except Exception:
+            logging.exception("Unexpected error while tearing down table")
+
+        # If an export is active when the dialog is closing, request cancellation
+        try:
+            self._closing = True
+            if getattr(self, "_export_in_progress", False):
+                try:
+                    self._export_cancel_requested = True
+                except Exception:
+                    logging.exception(
+                        "Failed to set export_cancel_requested during cleanup"
+                    )
+                try:
+                    if getattr(self, "_export_file_handle", None):
+                        try:
+                            self._export_file_handle.close()
+                        except Exception:
+                            logging.exception(
+                                "Failed to close export file handle during cleanup"
+                            )
+                        self._export_file_handle = None
+                except Exception:
+                    logging.exception(
+                        "Error while closing export file handle during cleanup"
+                    )
+                try:
+                    # If exported path looks like a temp file (not in Downloads), remove it
+                    from pathlib import Path as _P
+
+                    p = _P(self._exporting_path) if self._exporting_path else None
+                    if p and p.exists() and p.parent.name.lower() != "downloads":
+                        try:
+                            p.unlink()
+                        except Exception:
+                            logging.exception(
+                                "Failed to unlink temporary exported file during cleanup"
+                            )
+                except Exception:
+                    logging.exception(
+                        "Error while removing temporary exported file during cleanup"
+                    )
         except Exception:
             pass
 
         try:
+            # Also delete any temporary CSV we created
+            if getattr(self, "_temp_csv", None):
+                try:
+                    import os
+
+                    os.remove(self._temp_csv)
+                except Exception:
+                    logging.exception("Failed to remove temp_csv during cleanup")
+                self._temp_csv = None
+        except Exception:
+            logging.exception("Error while cleaning up temp_csv")
+
+        try:
+            # Allow Qt to process any pending events/deferred deletions
+            try:
+                from PySide6.QtCore import QCoreApplication
+
+                QCoreApplication.processEvents()
+            except Exception:
+                logging.exception("Failed during QCoreApplication.processEvents()")
+
             import gc
 
             gc.collect()
         except Exception:
-            pass
+            logging.exception("Error during final GC in cleanup")
 
     def accept(self):
         # Ensure memory is released before dialog is destroyed

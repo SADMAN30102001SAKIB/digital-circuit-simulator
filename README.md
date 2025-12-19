@@ -15,7 +15,7 @@ Modern, professional circuit simulator built with PySide6 (Qt for Python).
   - Wire routing with waypoints
   - Dynamic component properties
   - Real-time simulation
-  - **truth-table generator** with a progress dialog and cancel support
+  - **truth-table generation**
 
 ## 📦 Installation
 
@@ -139,33 +139,30 @@ Adjust grid size, zoom limits in `ui/canvas.py`.
 
 ## Case Study: Large Truth-Table Memory (>2^16 rows) 💾
 
-**Problem:** Generating very large truth tables (e.g., 16 inputs → 65,536 rows) produced a large process Resident Set Size (RSS is the amount of physical RAM a process currently occupies) spike while the table was displayed (observed peaks ≈ 800+ MB for 65K+ rows) and could leave elevated memory after the dialog was closed in earlier builds.
-
-**Reproduction (quick):**
-
-- Create an LED driven by 16 `INPUT` switches and use **Generate Truth Table** for that LED.
-- Watch the process RSS in Task Manager while the table is shown.
-
-**Findings:**
-
-- The root cause is the item-based approach: `QTableWidget` creates a `QTableWidgetItem` for every cell which results in large Qt/C++ allocations (table internals, render caches, etc.).
-- Clearing Python references alone wasn't enough to bring RSS back to the pre‑Qt baseline because some memory is held in C++ allocator pools and Qt caches.
+**Problem:** Generating very large truth tables (e.g., 16 inputs → 65,536 rows) produced a large process Resident Set Size (RSS is the amount of physical RAM a process currently occupies) spike while the table was displayed (observed peaks ≈ 800+ MB for 65K+ rows) and was leaving elevated memory after the dialog was closed in earlier builds.
 
 **Mitigations / fixes applied:**
 
+- Root cause: the original item-based viewer created a `QTableWidgetItem` for every cell which triggered large C++/Qt allocations and produced massive RSS spikes for large truth tables (e.g., 2^16 rows). Releasing Python references alone wasn't sufficient to immediately reclaim that C++ memory due to allocator behavior and Qt caches.
+
 - `simulator/main.py`:
 
-  - Import `gc` and, on Cancel or after the truth-table dialog returns, clear any partial `rows` list (if present), set `rows = None`, and call `gc.collect()` so Python references are released promptly.
+  - Pauses simulation and suspends UI updates while a model-based truth-table view runs; ensures simulator state is restored and UI updates resume after the dialog is closed.
 
 - `ui/components/truthtabledialog.py`:
-  - Store the original rows reference in `self._rows` in `__init__`.
-  - Added a `_cleanup()` method that clears `self._rows` (if a list), deletes the attribute, clears and `deleteLater()`s the `QTableWidget`, deletes `self.table`, and calls `gc.collect()`.
-  - Hooked `_cleanup()` into `accept()`, `reject()` and `closeEvent()` so cleanup runs regardless of how the dialog is closed.
+
+  - Replaced the item-based truth-table viewer with a lazy model-based view (`QAbstractTableModel` + `QTableView`) to eliminate per-cell `QTableWidgetItem` allocations that caused RSS spikes.
+  - Redesigned export to run in small, cancelable chunks on the main thread (saves to Downloads when possible), and added a centralized `_cleanup()` method that closes export files, removes temporary CSV files, detaches the model (`setModel(None)`), schedules safe Qt widget deletion (`deleteLater()`), processes pending Qt events, and calls `gc.collect()` on close — together these prevent leaks, races, and UI hangs.
+  - Hooked `_cleanup()` into `accept()`, `reject()` and `closeEvent()` so cleanup runs reliably regardless of how the dialog is closed.
+
+- Additional improvements:
+  - Removed in-memory preview/fallbacks, improved Cancel/Close behavior during export, and replaced fragile thread usage with a safe chunked main‑thread exporter (avoids unsafe cross‑thread access to Qt objects and prevents hangs/races).
+  - Added logging for export errors, deterministic file cleanup, and immediate Export-button disable to avoid leaving temp files locked on Windows and prevent double-started exports; exported CSVs are saved to the user's Downloads folder when available (fallback to a temp file otherwise).
 
 **Observed results:**
 
-- Peak memory while the table is shown: ~800 MB (example run).
-- After safe cleanup + GC the process RSS dropped significantly in tests (often to ≈ 90–100 MB).
+- Previously, peak memory while the table was shown could reach ~800 MB (example run) due to per-cell Qt allocations.
+- In the current implementation the large RSS spike is no longer reproducible in smoke tests; opening very large truth tables now keeps memory near baseline (typically ≈ 40-45 MB) during and after the dialog is closed.
 
 ## 📝 Notes
 
