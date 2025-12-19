@@ -171,6 +171,56 @@ class TruthTableDialog(QDialog):
         progress.setAutoClose(False)
         progress.show()
 
+        # Increase the dialog width so content has enough room on wide tables
+        try:
+            progress.setMinimumWidth(420)
+        except Exception:
+            logging.exception("Failed to set progress dialog minimum width")
+        # Center the progress dialog over the parent so it remains visually centered
+        try:
+            from PySide6.QtCore import QPoint
+
+            progress.adjustSize()
+            parent_center = self.frameGeometry().center()
+            pg = progress.frameGeometry()
+            new_top_left = QPoint(
+                parent_center.x() - (pg.width() // 2),
+                parent_center.y() - (pg.height() // 2),
+            )
+            progress.move(new_top_left)
+        except Exception:
+            logging.exception("Failed to center progress dialog")
+        # Make the Cancel button compact/small to reduce visual weight
+        try:
+            cancel_btn = progress.findChild(QPushButton)
+            if cancel_btn:
+                existing = cancel_btn.property("class") or ""
+                classes = set(existing.split())
+                classes.add("small")
+                # Preserve danger if present (visual cue)
+                if "danger" not in classes:
+                    classes.add("danger")
+                cancel_btn.setProperty("class", " ".join(classes))
+                try:
+                    cancel_btn.style().unpolish(cancel_btn)
+                    cancel_btn.style().polish(cancel_btn)
+                except Exception:
+                    # fallback: set inline style to match slightly larger small size
+                    cancel_btn.setStyleSheet(
+                        "padding:3px 8px; font-size:12px; min-height:24px; border-radius:4px;"
+                    )
+                # Enforce compact geometry so the button is visually small but not too tiny
+                try:
+                    cancel_btn.setFixedHeight(26)
+                    # Slightly larger min width so text doesn't truncate awkwardly
+                    cancel_btn.setMinimumWidth(72)
+                    cancel_btn.setContentsMargins(2, 2, 2, 2)
+                except Exception:
+                    logging.exception("Failed to set compact size on cancel button")
+                cancel_btn.update()
+        except Exception:
+            logging.exception("Failed to style progress dialog cancel button")
+
         batch = max(256, min(4096, total // 64 or 256))
         idx = 0
         # No per-row cache statistics are shown to the user; keep export simple

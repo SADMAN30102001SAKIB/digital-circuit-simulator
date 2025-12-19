@@ -95,6 +95,18 @@ QPushButton[class="danger"]:hover {
     background-color: #FF6464;
 }
 
+/* Small / compact buttons */
+QPushButton[class~="small"] {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-height: 24px;
+    border-radius: 4px;
+}
+
+QPushButton[class~="small"][class~="danger"] {
+    background-color: #FF5050;
+}
+
 /* Tool Buttons (in toolbar) */
 QToolButton {
     background-color: transparent;
