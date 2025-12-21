@@ -57,11 +57,19 @@ This is the recommended way for most users.
 > [!TIP]
 > `uv` saves disk space by using a global cache and hard-linking packages across projects instead of copying them!
 
-### 📋 Prerequisites
-To run the linux build, you **must** install the X11/Qt dependencies that Linux binaries require to render graphics. If these are missing, the app will not run.
+### 📋 Prerequisites (Linux & WSL2)
+To run or build the Linux version, you **must** install the X11/Qt dependencies. These are required for the application to render graphics and handle window events.
 
+**1. Graphical Dependencies:**
 ```bash
-sudo apt install libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0
+sudo apt update
+sudo apt install libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libxcb-shape0 libxcb-util1
+```
+
+**2. Build Dependencies (Nuitka only):**
+If you are using `nuitka_build.py` on Linux, you must install `patchelf` to allow the compiler to modify shared library paths in the standalone binary:
+```bash
+sudo apt install patchelf
 ```
 
 ### Onefile vs. Onedir: Which should you choose?
