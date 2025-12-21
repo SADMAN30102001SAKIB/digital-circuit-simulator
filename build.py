@@ -163,7 +163,7 @@ def main(argv=None):
                     # Note: On Mac, it's best to 'brew install upx'.
                     # This check is for power users who place a compiled upx binary in 'upx-mac'.
                     build_args.append(f"--upx-dir={p.name}")
-                    print(f"✅ Using UPX from: {p.name}")
+                    print(f"[UPX] Using folder: {p.name}")
                     upx_found = True
                     break
 
@@ -383,7 +383,7 @@ def main(argv=None):
             subprocess.check_call([sys.executable, str(prune_script), str(dist_path)])
             print("✅ Prune complete.")
 
-    print(f"\n✅ Build complete! Check dist/{args.name}")
+    print(f"\n[SUCCESS] Build complete! Check dist/{args.name}")
 
 
 if __name__ == "__main__":
