@@ -19,6 +19,8 @@ Modern, professional logic circuit simulator built with **PySide6** (Qt for Pyth
   - **Movable UI**: Floatable dock widgets for component library and property panels.
 
 ## 📦 Installation & Usage
+> [!NOTE]
+> This project is optimized and tested for **Python 3.10 through 3.12**.
 
 ### 🚀 Fast Track (Using `uv`)
 Recommended for speed and simplicity.
