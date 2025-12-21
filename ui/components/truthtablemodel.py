@@ -44,7 +44,7 @@ class VirtualTruthTableModel(QAbstractTableModel):
             return None
         if orientation == Qt.Horizontal:
             if section < self.n:
-                return self.inputs[section].label or f"IN{section+1}"
+                return self.inputs[section].label or f"IN{section + 1}"
             return self.led.label or "LED"
         if orientation == Qt.Vertical:
             return str(section + 1)

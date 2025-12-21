@@ -1,8 +1,7 @@
-import gc
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, Qt, QTimer, Slot, QStandardPaths
-from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox, QPushButton
+from PySide6.QtCore import Qt, QTimer, Slot, QStandardPaths
+from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox
 
 from assets.help_text import ABOUT_TEXT, HELP_TEXT
 
@@ -73,7 +72,6 @@ class CircuitSimulator(QMainWindow):
     # Annotation classes for type checking
     ANNOTATION_CLASSES = (TextAnnotation, RectangleAnnotation, CircleAnnotation)
 
-
     DEFAULT_CANVAS_SIZE = 10000
     DEFAULT_GRID_SIZE = 20
     DEFAULT_FPS = 60
@@ -94,7 +92,9 @@ class CircuitSimulator(QMainWindow):
             self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             # Fallback if Documents folder is restricted or malformed
-            print(f"Warning: Could not use Documents folder ({e}). Falling back to local 'save_files'.")
+            print(
+                f"Warning: Could not use Documents folder ({e}). Falling back to local 'save_files'."
+            )
             self.SAVE_DIR = Path("save_files")
             self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -256,7 +256,7 @@ class CircuitSimulator(QMainWindow):
     @Slot(object, str)
     def _on_component_selected(self, component_class, name):
         component = component_class(0, 0)
-        
+
         # Assign default label to new inputs
         if component.name == "INPUT" and not getattr(component, "label", None):
             component.label = self._generate_default_input_label()
@@ -467,7 +467,7 @@ class CircuitSimulator(QMainWindow):
                     existing_nums.add(num)
                 except ValueError:
                     pass
-        
+
         # Find the smallest positive integer not in use
         num = 1
         while num in existing_nums:
@@ -740,7 +740,7 @@ class CircuitSimulator(QMainWindow):
             self.gates, self._find_source_gate_for_pin, led, inputs=inputs
         )
 
-        input_names = [g.label or f"IN{i+1}" for i, g in enumerate(inputs)]
+        input_names = [g.label or f"IN{i + 1}" for i, g in enumerate(inputs)]
         output_name = led.label or "LED"
 
         try:

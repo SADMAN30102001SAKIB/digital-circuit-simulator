@@ -37,18 +37,19 @@ def setup_toolbar(sim):
 
     sim.action_redo = QAction("Redo", sim)
     import platform
+
     current_os = platform.system()
     if current_os == "Linux":
-        # On Linux, QKeySequence.Redo is usually Ctrl+Shift+Z. 
+        # On Linux, QKeySequence.Redo is usually Ctrl+Shift+Z.
         # We explicitly add Ctrl+Y for parity with the Windows experience.
         sim.action_redo.setShortcuts([QKeySequence.Redo, "Ctrl+Y"])
     elif current_os == "Darwin":
         # On Mac, Redo is always Command+Shift+Z
-        sim.action_redo.setShortcut("Ctrl+Shift+Z") # Qt translates Ctrl to Cmd on Mac
+        sim.action_redo.setShortcut("Ctrl+Shift+Z")  # Qt translates Ctrl to Cmd on Mac
     else:
         # On Windows, QKeySequence.Redo already includes Ctrl+Y.
         sim.action_redo.setShortcut(QKeySequence.Redo)
-        
+
     sim.action_redo.setToolTip("Redo (Ctrl+Shift+Z)")
     sim.action_redo.triggered.connect(sim.redo)
     toolbar.addAction(sim.action_redo)
@@ -119,12 +120,12 @@ def setup_menu(sim):
     pref_action.setMenuRole(QAction.MenuRole.PreferencesRole)
     pref_action.triggered.connect(sim._show_settings)
     settings_menu.addAction(pref_action)
-    
+
     settings_menu.addAction("&Global Settings...", sim._show_global_settings)
 
     help_menu = menubar.addMenu("&Help")
     help_menu.addAction("&How to Use", sim._show_help)
-    
+
     about_action = QAction("&About", sim)
     about_action.setMenuRole(QAction.MenuRole.AboutRole)
     about_action.triggered.connect(sim._show_about)

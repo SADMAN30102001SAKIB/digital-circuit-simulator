@@ -125,10 +125,12 @@ class PropertyPanel(QDockWidget):
 
         # Update title based on component type
         if self.target_gate.name in ["INPUT", "LED"]:
-            display_name = getattr(self.target_gate, "label", None) or self.target_gate.name
+            display_name = (
+                getattr(self.target_gate, "label", None) or self.target_gate.name
+            )
         else:
             display_name = self.target_gate.name
-            
+
         self.setWindowTitle(f"Properties - {display_name}")
 
         # Rotation
@@ -220,7 +222,9 @@ class PropertyPanel(QDockWidget):
         try:
             # Parent to self so they are cleaned up automatically
             qf = QFontComboBox(self)
-            qf.setFontFilters(QFontComboBox.ScalableFonts) # Filter out legacy bitmap fonts
+            qf.setFontFilters(
+                QFontComboBox.ScalableFonts
+            )  # Filter out legacy bitmap fonts
             qp = QPlainTextEdit(self)
             qs = QSpinBox(self)
             qb = QPushButton("_")
@@ -322,7 +326,7 @@ class PropertyPanel(QDockWidget):
         # Add rotation buttons
         self.layout.addSpacing(8)
         self._add_annotation_rotation_buttons()
-        
+
         # Add stretch at the end
         self.layout.addStretch()
 
@@ -331,7 +335,7 @@ class PropertyPanel(QDockWidget):
         # Text content
         text_group = QGroupBox("Text Content")
         if platform.system() == "Linux":
-            # Surgical fix: Target JUST the gap by forcing the title and padding 
+            # Surgical fix: Target JUST the gap by forcing the title and padding
             # On Linux Fusion style, the title is displaced; we force it tighter.
             text_group.setStyleSheet("""
                 QGroupBox { 
@@ -345,17 +349,19 @@ class PropertyPanel(QDockWidget):
                 }
             """)
             text_layout = QVBoxLayout()
-            text_layout.setContentsMargins(8, 0, 8, 8) 
+            text_layout.setContentsMargins(8, 0, 8, 8)
             text_layout.setSpacing(0)
         else:
             text_layout = QVBoxLayout()
-            text_layout.setContentsMargins(8, 8, 8, 8) # Windows Perfect
+            text_layout.setContentsMargins(8, 8, 8, 8)  # Windows Perfect
 
         text_input = QPlainTextEdit(annotation.text)
-        text_input.document().setDocumentMargin(0) # Remove internal platform-specific margins
+        text_input.document().setDocumentMargin(
+            0
+        )  # Remove internal platform-specific margins
         text_input.setPlaceholderText("Enter text...")
-        
-        # On Linux, these widgets have a very tall default sizeHint. 
+
+        # On Linux, these widgets have a very tall default sizeHint.
         # We force a smaller height to match the Windows 'perfect' density.
         if platform.system() == "Linux":
             text_input.setMinimumHeight(0)
@@ -382,7 +388,9 @@ class PropertyPanel(QDockWidget):
         family_layout = QHBoxLayout()
         family_layout.addWidget(QLabel("Family:"))
         family_input = QFontComboBox()
-        family_input.setFontFilters(QFontComboBox.ScalableFonts) # Filter out legacy bitmap fonts
+        family_input.setFontFilters(
+            QFontComboBox.ScalableFonts
+        )  # Filter out legacy bitmap fonts
         family_input.setCurrentFont(QFont(annotation.font_family))
         family_input.currentFontChanged.connect(
             lambda f: self._update_text_property(annotation, "font_family", f.family())
@@ -570,7 +578,9 @@ class PropertyPanel(QDockWidget):
             radius_spin.setRange(0, 100)
             radius_spin.setValue(int(getattr(annotation, "border_radius", 0)))
             radius_spin.valueChanged.connect(
-                lambda v: self._update_annotation_property(annotation, "border_radius", v)
+                lambda v: self._update_annotation_property(
+                    annotation, "border_radius", v
+                )
             )
             border_radius_layout.addWidget(radius_spin)
             border_layout.addLayout(border_radius_layout)
@@ -822,8 +832,8 @@ class PropertyPanel(QDockWidget):
                     display_name = getattr(gate, "label", None) or gate.name
                 else:
                     display_name = gate.name
-                    
-                btn = QPushButton(f"{i+1}. {display_name}")
+
+                btn = QPushButton(f"{i + 1}. {display_name}")
                 btn.clicked.connect(
                     lambda checked, g=gate: self.actionTriggered.emit(
                         f"select_gate_{id(g)}"
@@ -838,7 +848,7 @@ class PropertyPanel(QDockWidget):
             self.layout.addWidget(annotations_label)
 
             for i, annotation in enumerate(self.annotations_list):
-                btn = QPushButton(f"{i+1}. {annotation.name}")
+                btn = QPushButton(f"{i + 1}. {annotation.name}")
                 btn.clicked.connect(
                     lambda checked, a=annotation: self.actionTriggered.emit(
                         f"select_annotation_{id(a)}"

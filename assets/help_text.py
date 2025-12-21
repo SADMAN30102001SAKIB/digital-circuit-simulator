@@ -64,4 +64,3 @@ ABOUT_TEXT = """
 
 <p><b>Version:</b> 3.1.0 (Advanced Audit Edition)</p>
 """
-

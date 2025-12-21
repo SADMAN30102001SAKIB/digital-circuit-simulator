@@ -79,6 +79,7 @@ class TruthTableDialog(QDialog):
         # This prevents the UI freeze reported with ResizeToContents.
         try:
             from PySide6.QtGui import QFontMetrics
+
             fm = QFontMetrics(table_view.font())
             for i, name in enumerate(headers):
                 # Calculate width of header text + some padding
@@ -285,17 +286,18 @@ class TruthTableDialog(QDialog):
             # expose open file for cleanup during dialog close
             self._export_file_handle = f
             writer = csv.writer(f)
-            headers = [g.label or f"IN{i+1}" for i, g in enumerate(model.inputs)] + [
+            headers = [g.label or f"IN{i + 1}" for i, g in enumerate(model.inputs)] + [
                 model.led.label or "LED"
             ]
             writer.writerow(headers)
         except Exception as e:
+            msg = str(e)
             logging.exception("Failed to open export file %s", path)
             _finalize_export(remove_temp=not saved_in_downloads)
             QTimer.singleShot(
                 0,
                 lambda: QMessageBox.warning(
-                    self, "Export Failed", f"Export failed: {e}"
+                    self, "Export Failed", f"Export failed: {msg}"
                 ),
             )
             return
@@ -334,15 +336,13 @@ class TruthTableDialog(QDialog):
                         break
                     # Prefer public accessor; get_row returns (bits, out_val, was_cached)
                     try:
-                        bits, out_val, was_cached = model.get_row(idx)
+                        bits, out_val, _ = model.get_row(idx)
                     except Exception:
                         # Fallback (robust): try internal method
                         try:
                             bits, out_val = model._ensure_cached(idx)
-                            was_cached = False
                         except Exception:
                             bits, out_val = [], False
-                            was_cached = False
 
                     writer.writerow(
                         ["1" if b else "0" for b in bits] + ["1" if out_val else "0"]
@@ -413,8 +413,19 @@ class TruthTableDialog(QDialog):
 
                             # Try wslview first (best for WSL2 users)
                             try:
-                                if subprocess.call(["which", "wslview"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0:
-                                    subprocess.Popen(["wslview", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                if (
+                                    subprocess.call(
+                                        ["which", "wslview"],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL,
+                                    )
+                                    == 0
+                                ):
+                                    subprocess.Popen(
+                                        ["wslview", path],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL,
+                                    )
                                     return
                             except Exception:
                                 pass
@@ -423,17 +434,39 @@ class TruthTableDialog(QDialog):
                             if is_wsl:
                                 try:
                                     # Convert Linux path to Windows path and launch via PS
-                                    win_path = subprocess.check_output(["wslpath", "-w", path]).decode().strip()
-                                    subprocess.Popen(["powershell.exe", "-Command", f"Start-Process '{win_path}'"], 
-                                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                    win_path = (
+                                        subprocess.check_output(["wslpath", "-w", path])
+                                        .decode()
+                                        .strip()
+                                    )
+                                    subprocess.Popen(
+                                        [
+                                            "powershell.exe",
+                                            "-Command",
+                                            f"Start-Process '{win_path}'",
+                                        ],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL,
+                                    )
                                     return
                                 except Exception:
                                     pass
 
                             # Try explicit xdg-open (fallback for native Linux desktop)
                             try:
-                                if subprocess.call(["which", "xdg-open"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0:
-                                    subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                if (
+                                    subprocess.call(
+                                        ["which", "xdg-open"],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL,
+                                    )
+                                    == 0
+                                ):
+                                    subprocess.Popen(
+                                        ["xdg-open", path],
+                                        stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL,
+                                    )
                                     return
                             except Exception:
                                 pass
@@ -454,7 +487,10 @@ class TruthTableDialog(QDialog):
                             pass
 
                         QMessageBox.warning(
-                            self, "Open Failed", "Unable to open CSV file.\nPlease open it manually from:\n" + path
+                            self,
+                            "Open Failed",
+                            "Unable to open CSV file.\nPlease open it manually from:\n"
+                            + path,
                         )
                     else:
                         if not saved_in_downloads:
@@ -464,12 +500,13 @@ class TruthTableDialog(QDialog):
 
                 QTimer.singleShot(0, _ask_open)
             except Exception as e:
-                logging.exception("Exception during export: %s", e)
+                msg = str(e)
+                logging.exception("Exception during export: %s", msg)
                 _finalize_export(remove_temp=not saved_in_downloads)
                 QTimer.singleShot(
                     0,
                     lambda: QMessageBox.warning(
-                        self, "Export Failed", f"Export failed: {e}"
+                        self, "Export Failed", f"Export failed: {msg}"
                     ),
                 )
 

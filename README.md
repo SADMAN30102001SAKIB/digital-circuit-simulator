@@ -52,10 +52,19 @@ python app.py
 ### 🧪 Running Tests
 The project uses `pytest` and `pytest-qt` for high-integrity verification.
 ```bash
-# Install test dependencies
+# Install dependencies
 uv sync --extra test
 # Run all tests (headless)
 uv run python -m pytest tests/
+```
+
+### 🧹 Quality Control (Linter)
+We use **Ruff** for sub-second linting and formatting. 
+```bash
+# Check for errors and auto-fixable issues
+uv run ruff check . --fix
+# Standardize formatting
+uv run ruff format .
 ```
 
 ## 🏗️ Building Executable
@@ -103,6 +112,9 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 - [ ] **Sub-circuits (The "Chip" Builder)**: Enable modularity by allowing users to encapsulate circuits (like a 4-bit Adder) into reusable custom blocks.
 
 ## 📝 Project Details
-- **Version**: 3.1.0 (Advanced Audit Edition)
-- **Engine**: PySide6(Qt)
+- **Version**: 3.1.0 (Professional Edition)
+- **Engine**: PySide6 (Qt)
+- **Quality**: Verified by 27+ tests & Ruff Linting (PEP 8)
+- **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
+- **Health**: 100% (Includes `MIT License`, `Code of Conduct`, and `Contribution Guidelines`)
 - **Persistence**: YAML structure with stable UIDs.

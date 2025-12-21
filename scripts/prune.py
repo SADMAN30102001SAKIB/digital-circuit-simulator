@@ -1,6 +1,5 @@
 import argparse
 import sys
-import platform
 from pathlib import Path
 
 # Identify Platform
@@ -11,7 +10,7 @@ IS_LINUX = sys.platform.startswith("linux")
 # Dynamic Extension
 EXT = ".dll" if IS_WIN else (".dylib" if IS_MAC else ".so")
 # On Linux/Mac, files often have versions like .so.6 or .dylib.1
-EXT_PATTERN = f"*{EXT}" if IS_WIN else f"*{EXT}*" 
+EXT_PATTERN = f"*{EXT}" if IS_WIN else f"*{EXT}*"
 PYD_EXT = ".pyd" if IS_WIN else ".so"
 
 REQUIRED_CORES = {
@@ -21,7 +20,7 @@ REQUIRED_CORES = {
     "qt6dbus",  # Explicitly preserve DBus on Linux
     "shiboken6",
     "pyside6",
-    "qtcore", 
+    "qtcore",
     "qtgui",
     "qtwidgets",
     "qtdbus",
@@ -75,7 +74,7 @@ def find_pyside_roots(dist_path: Path):
     internal = dist_path / "_internal"
     if internal.is_dir():
         roots.append(internal)
-    
+
     # 2. Look for any explicit PySide6 folders (Sometimes in root or _internal)
     for p in dist_path.rglob("PySide6"):
         if p.is_dir() and p not in roots:
@@ -91,7 +90,7 @@ def prune_root(root: Path, dry_run: bool = True):
     # On Mac/Linux, we check for .dylib or .so instead of .dll
     for dll in root.glob(EXT_PATTERN):
         dll_name = dll.name.lower()
-        
+
         # Fuzzy match for core libs (handles 'lib' prefix or versioning like .so.6)
         if any(core in dll_name for core in REQUIRED_CORES):
             continue
@@ -111,16 +110,17 @@ def prune_root(root: Path, dry_run: bool = True):
         for folder in plugins_dir.iterdir():
             if not folder.is_dir():
                 continue
-            
+
             # If the folder is in our allowlist, keep the WHOLE folder
             if folder.name.lower() in ALLOW_PLUGINS:
                 continue
-                
+
             # Otherwise, it's an unused category (like 'qml' or 'multimedia' plugins)
             removed.append(folder)
             if not dry_run:
                 try:
                     import shutil
+
                     shutil.rmtree(folder)
                 except Exception as e:
                     print(f"Warning: failed to remove {folder}: {e}")
