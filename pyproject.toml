@@ -15,3 +15,7 @@ build = [
     "nuitka>=2.8.9",
     "zstandard>=0.25.0",
 ]
+test = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.4.0",
+]
