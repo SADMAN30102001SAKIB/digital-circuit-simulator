@@ -46,6 +46,26 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra test
 
+    - name: Install Linux system dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libegl1 \
+          libopengl0 \
+          libxcb-cursor0 \
+          libxcb-icccm4 \
+          libxcb-keysyms1 \
+          libxcb-image0 \
+          libxcb-shm0 \
+          libxcb-render-util0 \
+          libxcb-xkb1 \
+          libxkbcommon-x11-0 \
+          libxcb-shape0 \
+          libxcb-util1 \
+          libxcb-xinerama0 \
+          libxcb-xinput0
+
     - name: Run tests (Linux/macOS)
       if: runner.os != 'Windows'
       env:
