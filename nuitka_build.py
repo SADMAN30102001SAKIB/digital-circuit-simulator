@@ -68,6 +68,7 @@ def main(argv=None):
         f"--output-filename={args.name}",
         "--enable-plugin=pyside6",
         "--remove-output",  # Clean up the build folder after success
+        "--assume-yes-for-downloads",  # Automatic download of dependencies in CI
     ]
 
     # Handle Windows Specifics
