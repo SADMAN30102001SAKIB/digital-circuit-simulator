@@ -32,9 +32,9 @@ This is the recommended way for most users.
    uv pip install -r requirements.txt
    ```
 3. **Run build**:
-   ```bash
-   uv run build.py --spec-filter --exclude-qt
-   ```
+    ```bash
+    uv run build.py --spec-filter --exclude-qt
+    ```
 
 ### Option B: Standard `venv`
 1.  **Install dependencies**:
@@ -48,12 +48,13 @@ This is the recommended way for most users.
     source venv/bin/activate
     pip install -r requirements.txt
     ```
-3.  **Run Build**: 
-   ```bash
+3.  **Run Build**:
+    ```bash
     python build.py --spec-filter --exclude-qt
     ```
 
-### **Find Output**: `dist/CircuitPlaygroundPro`
+### Find Output
+`dist/CircuitPlaygroundPro`
 
 > [!TIP]
 > `uv` saves disk space by using a global cache and hard-linking packages across projects instead of copying them!
@@ -117,8 +118,8 @@ Nuitka translates your Python code into C++ and compiles it into a native binary
 > Nuitka will ask to download a C++ compiler on the first run. Just say 'Yes'.
 
 ### Build Commands:
-*   **For a single executable**: `python nuitka_build.py --onefile`
-*   **For a folder**: `python nuitka_build.py --onedir`
+- **For a single executable**: `python nuitka_build.py --onefile`
+- **For a folder**: `python nuitka_build.py --onedir`
 
 ---
 
