@@ -1,4 +1,3 @@
-import pytest
 from core.logic_gates import ANDGate, NOTGate
 from core.io import InputSwitch, OutputLED
 

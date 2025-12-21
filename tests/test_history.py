@@ -1,4 +1,3 @@
-import pytest
 from core.logic_gates import ANDGate
 
 

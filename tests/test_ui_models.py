@@ -63,21 +63,26 @@ def test_truthtable_model_caching(qapp):
     sw1.label = "CHANGED"
     assert 1 in model._cache
 
+
 def test_truthtable_model_large(qapp):
     """Verify that a model with 20 inputs (1M+ rows) initializes instantly."""
-    inputs = [InputSwitch(0, i*10) for i in range(20)]
+    inputs = [InputSwitch(0, i * 10) for i in range(20)]
     led = OutputLED(200, 0)
-    
-    def mock_find_source(pin): return None
-    
+
+    def mock_find_source(pin):
+        return None
+
     import time
+
     start = time.time()
-    model = VirtualTruthTableModel(inputs + [led], mock_find_source, led=led, inputs=inputs)
+    model = VirtualTruthTableModel(
+        inputs + [led], mock_find_source, led=led, inputs=inputs
+    )
     duration = time.time() - start
-    
+
     assert model.rowCount() == 1048576
-    assert duration < 0.1 # Should be near-instant
-    
+    assert duration < 0.1  # Should be near-instant
+
     # Check data for row 1,000,000
     # 1,000,000 in binary: 0b11110100001001000000 (20 bits)
     # The data() call will trigger cache entry for this row.

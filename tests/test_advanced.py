@@ -1,4 +1,3 @@
-import pytest
 from core.advanced import Multiplexer, Demultiplexer, Encoder, Decoder
 
 
