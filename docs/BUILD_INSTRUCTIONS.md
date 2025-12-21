@@ -48,7 +48,10 @@ This is the recommended way for most users.
     source venv/bin/activate
     pip install -r requirements.txt
     ```
-3.  **Run Build**: `python build.py --spec-filter --exclude-qt`
+3.  **Run Build**: 
+   ```bash
+    python build.py --spec-filter --exclude-qt
+    ```
 
 ### **Find Output**: `dist/CircuitPlaygroundPro`
 
