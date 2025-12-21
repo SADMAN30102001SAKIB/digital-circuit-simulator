@@ -31,26 +31,22 @@ Best for professional distribution or older PCs. **You must send the entire fold
 
 ---
 
-## 📁 System Folders & Files Explained
+## 📁 Temporary Folders & Files 
 
-### **dist/** (PyInstaller Default)
-This is where PyInstaller places its final work. 
-*   **Onefile**: Contains just the executable.
-*   **Onedir**: Contains a folder named after your app.
-
-### **app.dist/** (Nuitka Default)
-This is created when you run `python nuitka_build.py` in standalone/folder mode. Treat this as your "Ship" folder.
-
-### **build/** (TEMPORARY)
+### **build/**
 Created by PyInstaller to prepare the build. 
 *   **Keep it?** ❌ NO - You can safely delete this after the build is successful to save space.
+
+### **CircuitPlaygroundPro.spec**
+This sometimes gets created when you run `build.py`.
+*   **Keep it?** ❌ NO - You can safely delete this after the build is complete.
 
 ---
 
 ## 🚀 Distribution Checklist
 
 - **One-File Delivery**: If using `--onefile`, you only need to send the single executable.
-- **Folder Delivery**: If using `--onedir`, you **MUST** send the entire folder. We recommend right-clicking the folder and selecting **Send to > Compressed (zipped) folder**.
+- **Folder Delivery**: If using `--onedir`, you **MUST** send the entire folder. We recommend zipping it first (Right-click > Compress/Zip).
 - **User Permissions**: Saved circuits and settings are stored in the user's **Documents** folder:
     - **Windows**: `C:\Users\<User>\Documents\CircuitPlaygroundPro`
     - **macOS**: `/Users/<User>/Documents/CircuitPlaygroundPro`
@@ -58,7 +54,7 @@ Created by PyInstaller to prepare the build.
     
     This ensures your files are safe and accessible even if you move the executable, and prevents OS security from blocking folder creation. 
     
-    *Note: If the application cannot access your Documents folder (e.g., due to strict security settings), it will automatically fall back to a local `save_files` folder in the app directory.*
+    *Note: If the application cannot access your Documents folder (e.g., due to strict security settings), it will automatically fall back to a local `save_files` folder in the application's root directory.*
 
 ## 💡 Pro Tips
 

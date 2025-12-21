@@ -219,7 +219,7 @@ class TruthTableDialog(QDialog):
                     )
                 # Enforce compact geometry so the button is visually small but not too tiny
                 try:
-                    cancel_btn.setFixedHeight(26)
+                    cancel_btn.setFixedHeight(32)
                     # Slightly larger min width so text doesn't truncate awkwardly
                     cancel_btn.setMinimumWidth(72)
                     cancel_btn.setContentsMargins(2, 2, 2, 2)

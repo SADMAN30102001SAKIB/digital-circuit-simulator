@@ -1,9 +1,16 @@
-**/__pycache__/
-app.dist/
+# Virtual environments
+.venv/
 venv/
 
-# Distribution
+# Python cache
+**/__pycache__/
+
+# Build artifacts
+app.dist/
+app.build/
+app.onefile-build/
 build/
 dist/
+CircuitPlaygroundPro
 *.spec
 *.exe

@@ -20,22 +20,29 @@ Modern, professional logic circuit simulator built with **PySide6** (Qt for Pyth
 ## 📦 Installation & Usage
 
 ### 🚀 Fast Track (Using `uv`)
-Recommended for speed and disk space efficiency.
-```powershell
-# Install uv
-# Windows (PowerShell):
+Recommended for speed and simplicity.
+```bash
+# Install uv (one-time)
+# Windows: 
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-# Linux/macOS:
+# Linux/macOS: 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Launch application (Automatic venv & sync)
+# Run application (auto-installs dependencies)
 uv run app.py
 ```
 
 ### 🐍 Standard Python
-```powershell
-# Install dependencies
-pip install -r requirements.txt
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+# Windows: 
+.venv\Scripts\activate
+# Linux/macOS: 
+source .venv/bin/activate
+
+# Install dependencies from pyproject.toml
+pip install .
 
 # Launch application
 python app.py
@@ -43,7 +50,7 @@ python app.py
 
 ## 🏗️ Building Executable
 
-The project includes a robust build system to create small, standalone executables (~22MB) using PyInstaller or Nuitka.
+The project includes a robust build system to create small, standalone executables (~21MB) using PyInstaller or Nuitka.
 
 **📖 Documentation:**
 - **[BUILD_INSTRUCTIONS.md](docs/BUILD_INSTRUCTIONS.md)** - detailed build flags.
@@ -52,8 +59,8 @@ The project includes a robust build system to create small, standalone executabl
 
 - **Mouse**: Pan with Left-drag/Middle-click, Scroll to Zoom, Double-click INPUTs to toggle.
 - **Wires**: Click Output pin (right) then click Input pin (left). Click empty space while wiring to add waypoints.
-- **Ctrl + S / L**: Save / Load Circuit
-- **Ctrl + Z / Y**: Undo / Redo
+- **Ctrl/Cmd + S / L**: Save / Load Circuit
+- **Ctrl/Cmd + Z / Y**: Undo / Redo
 - **Q / E**: Rotate components
 - **Delete**: Remove selected item
 - **Escape**: Cancel wiring or selection
