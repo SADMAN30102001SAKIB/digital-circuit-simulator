@@ -85,14 +85,21 @@ class GateItem(QGraphicsItem):
                 QRectF(0, 0, self.gate.width, self.gate.height), 6, 6
             )
 
-        # Draw label
+        # Draw label/name
         painter.setPen(QColor(TEXT_COLOR))
         font = QFont("Segoe UI", 12 if self.gate.name == "LED" else 11, QFont.Bold)
         painter.setFont(font)
+        
+        # For INPUT and LED, prioritize label. For others, just name to identify the type.
+        if self.gate.name in ["INPUT", "LED"]:
+            display_name = getattr(self.gate, "label", None) or self.gate.name
+        else:
+            display_name = self.gate.name
+            
         painter.drawText(
             QRectF(0, 0, self.gate.width, self.gate.height),
             Qt.AlignCenter,
-            self.gate.name,
+            display_name,
         )
 
     def itemChange(self, change, value):

@@ -1,3 +1,4 @@
+import platform
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -121,12 +123,12 @@ class PropertyPanel(QDockWidget):
             self._show_component_list()
             return
 
-        # Update title to show Properties when a gate is selected
-        display_name = (
-            self.target_gate.label
-            if getattr(self.target_gate, "label", None)
-            else self.target_gate.name
-        )
+        # Update title based on component type
+        if self.target_gate.name in ["INPUT", "LED"]:
+            display_name = getattr(self.target_gate, "label", None) or self.target_gate.name
+        else:
+            display_name = self.target_gate.name
+            
         self.setWindowTitle(f"Properties - {display_name}")
 
         # Rotation
@@ -208,16 +210,17 @@ class PropertyPanel(QDockWidget):
                 analysis_group.setLayout(analysis_layout)
                 self.layout.addWidget(analysis_group)
 
-        # Add spacing
-        self.layout.addSpacing(8)
-
         # Control buttons
         self._add_control_buttons()
+
+        # Add stretch at the end to keep everything pushed to the top
+        self.layout.addStretch()
 
     def _prewarm_widgets(self):
         try:
             # Parent to self so they are cleaned up automatically
             qf = QFontComboBox(self)
+            qf.setFontFilters(QFontComboBox.ScalableFonts) # Filter out legacy bitmap fonts
             qp = QPlainTextEdit(self)
             qs = QSpinBox(self)
             qb = QPushButton("_")
@@ -319,16 +322,47 @@ class PropertyPanel(QDockWidget):
         # Add rotation buttons
         self.layout.addSpacing(8)
         self._add_annotation_rotation_buttons()
+        
+        # Add stretch at the end
+        self.layout.addStretch()
 
     def _add_text_annotation_controls(self, annotation):
         """Add controls for text annotation"""
         # Text content
         text_group = QGroupBox("Text Content")
-        text_layout = QVBoxLayout()
+        if platform.system() == "Linux":
+            # Surgical fix: Target JUST the gap by forcing the title and padding 
+            # On Linux Fusion style, the title is displaced; we force it tighter.
+            text_group.setStyleSheet("""
+                QGroupBox { 
+                    margin-top: 2.8ex; 
+                    padding-top: 4px; 
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left; 
+                    padding: 0 5px;
+                }
+            """)
+            text_layout = QVBoxLayout()
+            text_layout.setContentsMargins(8, 0, 8, 8) 
+            text_layout.setSpacing(0)
+        else:
+            text_layout = QVBoxLayout()
+            text_layout.setContentsMargins(8, 8, 8, 8) # Windows Perfect
 
         text_input = QPlainTextEdit(annotation.text)
+        text_input.document().setDocumentMargin(0) # Remove internal platform-specific margins
         text_input.setPlaceholderText("Enter text...")
-        text_input.setMaximumHeight(100)
+        
+        # On Linux, these widgets have a very tall default sizeHint. 
+        # We force a smaller height to match the Windows 'perfect' density.
+        if platform.system() == "Linux":
+            text_input.setMinimumHeight(0)
+            text_input.setFixedHeight(100)
+            text_group.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        else:
+            text_input.setMaximumHeight(100)
         # Use simple textChanged signal for QPlainTextEdit
         text_input.textChanged.connect(
             lambda: self._update_text_property(
@@ -348,6 +382,7 @@ class PropertyPanel(QDockWidget):
         family_layout = QHBoxLayout()
         family_layout.addWidget(QLabel("Family:"))
         family_input = QFontComboBox()
+        family_input.setFontFilters(QFontComboBox.ScalableFonts) # Filter out legacy bitmap fonts
         family_input.setCurrentFont(QFont(annotation.font_family))
         family_input.currentFontChanged.connect(
             lambda f: self._update_text_property(annotation, "font_family", f.family())
@@ -468,49 +503,7 @@ class PropertyPanel(QDockWidget):
         self.layout.addWidget(size_group)
 
         # Border
-        border_group = QGroupBox("Border")
-        border_layout = QVBoxLayout()
-
-        border_width_layout = QHBoxLayout()
-        border_width_layout.addWidget(QLabel("Width:"))
-        border_spin = QSpinBox()
-        border_spin.setRange(1, 20)
-        border_spin.setValue(int(annotation.border_width))
-        border_spin.valueChanged.connect(
-            lambda v: self._update_annotation_property(annotation, "border_width", v)
-        )
-        border_width_layout.addWidget(border_spin)
-        border_layout.addLayout(border_width_layout)
-
-        border_color_layout = QHBoxLayout()
-        border_color_layout.addWidget(QLabel("Color:"))
-
-        # Color button
-        color_btn = QPushButton(annotation.border_color)
-        text_contrast = (
-            "black" if QColor(annotation.border_color).lightness() > 128 else "white"
-        )
-        color_btn.setStyleSheet(
-            f"background-color: {annotation.border_color}; color: {text_contrast}; border: 1px solid #555;"
-        )
-        color_btn.clicked.connect(lambda: self._pick_color(annotation, "border_color"))
-
-        border_color_layout.addWidget(color_btn)
-        border_layout.addLayout(border_color_layout)
-
-        border_radius_layout = QHBoxLayout()
-        border_radius_layout.addWidget(QLabel("Radius:"))
-        radius_spin = QSpinBox()
-        radius_spin.setRange(0, 100)
-        radius_spin.setValue(int(getattr(annotation, "border_radius", 0)))
-        radius_spin.valueChanged.connect(
-            lambda v: self._update_annotation_property(annotation, "border_radius", v)
-        )
-        border_radius_layout.addWidget(radius_spin)
-        border_layout.addLayout(border_radius_layout)
-
-        border_group.setLayout(border_layout)
-        self.layout.addWidget(border_group)
+        self._add_border_controls(annotation, include_radius=True)
 
     def _add_circle_annotation_controls(self, annotation):
         """Add controls for circle annotation"""
@@ -533,9 +526,14 @@ class PropertyPanel(QDockWidget):
         self.layout.addWidget(size_group)
 
         # Border
+        self._add_border_controls(annotation, include_radius=False)
+
+    def _add_border_controls(self, annotation, include_radius=False):
+        """Add border controls (width, color, and optional radius)"""
         border_group = QGroupBox("Border")
         border_layout = QVBoxLayout()
 
+        # Width
         border_width_layout = QHBoxLayout()
         border_width_layout.addWidget(QLabel("Width:"))
         border_spin = QSpinBox()
@@ -547,6 +545,7 @@ class PropertyPanel(QDockWidget):
         border_width_layout.addWidget(border_spin)
         border_layout.addLayout(border_width_layout)
 
+        # Color
         border_color_layout = QHBoxLayout()
         border_color_layout.addWidget(QLabel("Color:"))
 
@@ -562,6 +561,19 @@ class PropertyPanel(QDockWidget):
 
         border_color_layout.addWidget(color_btn)
         border_layout.addLayout(border_color_layout)
+
+        # Radius (optional)
+        if include_radius:
+            border_radius_layout = QHBoxLayout()
+            border_radius_layout.addWidget(QLabel("Radius:"))
+            radius_spin = QSpinBox()
+            radius_spin.setRange(0, 100)
+            radius_spin.setValue(int(getattr(annotation, "border_radius", 0)))
+            radius_spin.valueChanged.connect(
+                lambda v: self._update_annotation_property(annotation, "border_radius", v)
+            )
+            border_radius_layout.addWidget(radius_spin)
+            border_layout.addLayout(border_radius_layout)
 
         border_group.setLayout(border_layout)
         self.layout.addWidget(border_group)
@@ -805,7 +817,13 @@ class PropertyPanel(QDockWidget):
             self.layout.addWidget(gates_label)
 
             for i, gate in enumerate(self.gates_list):
-                btn = QPushButton(f"{i+1}. {gate.name}")
+                # Prefer label for INPUT/LED in the list view
+                if gate.name in ["INPUT", "LED"]:
+                    display_name = getattr(gate, "label", None) or gate.name
+                else:
+                    display_name = gate.name
+                    
+                btn = QPushButton(f"{i+1}. {display_name}")
                 btn.clicked.connect(
                     lambda checked, g=gate: self.actionTriggered.emit(
                         f"select_gate_{id(g)}"

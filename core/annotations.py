@@ -1,6 +1,3 @@
-import math
-
-
 class Annotation:
     """Base class for UI annotations (non-circuit elements)"""
 
@@ -11,33 +8,6 @@ class Annotation:
         self.width = 100
         self.height = 60
         self.rotation = 0
-
-    def contains_point(self, x, y):
-        """Check if point is inside annotation (accounts for rotation)"""
-        if self.rotation == 0:
-            return (
-                self.x <= x <= self.x + self.width
-                and self.y <= y <= self.y + self.height
-            )
-
-        # For rotated annotations, transform the point to local coordinates
-        cx = self.x + self.width / 2
-        cy = self.y + self.height / 2
-
-        dx = x - cx
-        dy = y - cy
-
-        angle_rad = math.radians(-self.rotation)
-        cos_a = math.cos(angle_rad)
-        sin_a = math.sin(angle_rad)
-
-        local_x = dx * cos_a - dy * sin_a
-        local_y = dx * sin_a + dy * cos_a
-
-        return (
-            -self.width / 2 <= local_x <= self.width / 2
-            and -self.height / 2 <= local_y <= self.height / 2
-        )
 
 
 class TextAnnotation(Annotation):
@@ -88,4 +58,3 @@ class CircleAnnotation(Annotation):
         # Keep width and height in sync with diameter
         self.width = value
         self.height = value
-

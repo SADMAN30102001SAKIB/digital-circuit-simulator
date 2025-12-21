@@ -1,6 +1,9 @@
 **/__pycache__/
+app.dist/
+venv/
 
 # Distribution
 build/
 dist/
 *.spec
+*.exe

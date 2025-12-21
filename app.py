@@ -4,7 +4,6 @@ from pathlib import Path
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication
 
-# from simulator import CircuitSimulator
 from simulator.main import CircuitSimulator
 from ui.theme import MODERN_STYLE
 
@@ -26,8 +25,10 @@ def main():
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
-    # Set application-wide font
-    font = QFont("Segoe UI", 10)
+    # Set application-wide font with robust fallbacks
+    font = QFont()
+    font.setFamilies(["Segoe UI", "San Francisco", "Helvetica Neue", "Arial"])
+    font.setPointSize(10)
     app.setFont(font)
 
     # Apply modern stylesheet
@@ -36,11 +37,11 @@ def main():
     # Set application info
     app.setApplicationName("Circuit Playground Pro")
     app.setOrganizationName("Circuit Simulator")
-    app.setApplicationVersion("3.0.0")
+    app.setApplicationVersion("3.1.0")
 
     # Create and show main window
     window = CircuitSimulator()
-    window.show()
+    window.showMaximized()
 
     # Run event loop
     sys.exit(app.exec())

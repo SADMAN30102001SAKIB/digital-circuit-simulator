@@ -88,35 +88,3 @@ class Gate:
         result = self.eval()
         if self.outputs:
             self.outputs[0].set_value(result)
-
-    def contains_point(self, x, y):
-        """Check if point is inside gate (accounts for rotation)"""
-        if self.rotation == 0:
-            # No rotation - simple bounds check
-            return (
-                self.x <= x <= self.x + self.width
-                and self.y <= y <= self.y + self.height
-            )
-
-        # For rotated gates, transform the point to local coordinates
-        # Gate center
-        cx = self.x + self.width / 2
-        cy = self.y + self.height / 2
-
-        # Vector from center to point
-        dx = x - cx
-        dy = y - cy
-
-        # Rotate point by -rotation to align with unrotated gate
-        angle_rad = math.radians(-self.rotation)
-        cos_a = math.cos(angle_rad)
-        sin_a = math.sin(angle_rad)
-
-        local_x = dx * cos_a - dy * sin_a
-        local_y = dx * sin_a + dy * cos_a
-
-        # Check if rotated point is within unrotated bounds
-        return (
-            -self.width / 2 <= local_x <= self.width / 2
-            and -self.height / 2 <= local_y <= self.height / 2
-        )

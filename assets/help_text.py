@@ -1,65 +1,67 @@
 HELP_TEXT = """
             <h2>🎮 Controls</h2>
 
-            <h3>Mouse</h3>
+            <h3>Mouse Interaction</h3>
             <table>
             <tr><td><b>Left-click drag</b></td><td>Pan the canvas</td></tr>
-            <tr><td><b>Scroll wheel</b></td><td>Zoom in/out</td></tr>
-            <tr><td><b>Click component</b></td><td>Select it</td></tr>
-            <tr><td><b>Drag component</b></td><td>Move it</td></tr>
-            <tr><td><b>Double-click INPUT</b></td><td>Toggle ON/OFF</td></tr>
-            <tr><td><b>Click output pin</b></td><td>Start wire</td></tr>
-            <tr><td><b>Click input pin</b></td><td>Complete wire</td></tr>
-            <tr><td><b>Click while wiring</b></td><td>Add waypoint</td></tr>
-            <tr><td><b>Right-click input pin</b></td><td>Remove wire</td></tr>
+            <tr><td><b>Scroll wheel</b></td><td>Zoom in/out to focus on details</td></tr>
+            <tr><td><b>Left-click</b></td><td>Select a component or annotation</td></tr>
+            <tr><td><b>Double-click INPUT</b></td><td>Toggle Switch ON/OFF</td></tr>
+            <tr><td><b>Pin Connection</b></td><td>Click an output (right) then an input (left) to wire</td></tr>
+            <tr><td><b>Wire Waypoints</b></td><td>Click empty space while wiring to add corners</td></tr>
+            <tr><td><b>Right-click Pin</b></td><td>Remove all wires connected to that pin</td></tr>
             </table>
 
             <h3>Keyboard Shortcuts</h3>
             <table>
-            <tr><td><b>Ctrl+N</b></td><td>New circuit</td></tr>
-            <tr><td><b>Ctrl+S</b></td><td>Save circuit</td></tr>
-            <tr><td><b>Ctrl+L</b></td><td>Load circuit</td></tr>
-            <tr><td><b>Ctrl+Z</b></td><td>Undo</td></tr>
-            <tr><td><b>Ctrl+Y</b></td><td>Redo</td></tr>
-            <tr><td><b>Delete</b></td><td>Delete selected</td></tr>
-            <tr><td><b>Q</b></td><td>Rotate counter-clockwise</td></tr>
-            <tr><td><b>E</b></td><td>Rotate clockwise</td></tr>
-            <tr><td><b>R</b></td><td>Reset view</td></tr>
-            <tr><td><b>G</b></td><td>Toggle grid</td></tr>
-            <tr><td><b>C</b></td><td>Toggle component library</td></tr>
-            <tr><td><b>P</b></td><td>Toggle properties panel</td></tr>
-            <tr><td><b>Escape</b></td><td>Cancel wire connection</td></tr>
+            <tr><td><b>Ctrl + N / O</b></td><td>New Circuit / Load Circuit</td></tr>
+            <tr><td><b>Ctrl + S</b></td><td>Save Circuit (YAML format)</td></tr>
+            <tr><td><b>Ctrl + Z / Y</b></td><td>Undo / Redo (with history limit)</td></tr>
+            <tr><td><b>Delete / Backspace</b></td><td>Delete selected items</td></tr>
+            <tr><td><b>Q / E</b></td><td>Rotate selection CCW / CW</td></tr>
+            <tr><td><b>R / G</b></td><td>Reset Zoom / Toggle Grid</td></tr>
+            <tr><td><b>C / P</b></td><td>Show Component Library / Property Panel</td></tr>
+            <tr><td><b>Escape</b></td><td>Cancel current action or wire</td></tr>
             </table>
 
-            <h3>Building Circuits</h3>
-            <ol>
-            <li>Click a component in the library to add it</li>
-            <li>Drag components to position them</li>
-            <li>Click an output pin (right side), then click an input pin (left side) to connect</li>
-            <li>Double-click INPUT switches to toggle them</li>
-            <li>Watch the LED respond to your logic!</li>
-            </ol>
+            <h3>🛠️ Advanced Features</h3>
 
-            <h3>Settings</h3>
-            <p>Go to <b>Settings > Preferences</b> to configure:</p>
+            <h4>Truth Table Generator</h4>
+            <p>Analyze your logic automatically! Select any <b>Output LED</b> and click "Generate Truth Table" in the Property Panel. The app will trace all influencing inputs and compute every possible state combo.</p>
             <ul>
-            <li><b>Canvas Size</b>: Adjust workspace dimensions</li>
-            <li><b>Grid Size</b>: Change snap-to-grid spacing</li>
-            <li><b>Simulation FPS</b>: Control simulation speed</li>
+                <li><b>Virtual Loading</b>: Handles millions of rows instantly.</li>
+                <li><b>CSV Export</b>: Save your results for external analysis.</li>
             </ul>
 
-            <p>For application-wide options, open <b>Settings > Global Settings</b>:</p>
+            <h4>Smart Component Naming</h4>
+            <p>New <b>Input Switches</b> are auto-labeled (e.g., <i>IN1, IN2</i>). These labels appear on the canvas and serve as headers in your truth tables.</p>
+
+            <h4>Component Configuration</h4>
+            <p>Use the <b>Property Panel</b> to customize your circuit:</p>
             <ul>
-            <li><b>Undo/Redo History Limit</b>: Set how many undo/redo steps are kept (10-200). Increasing this lets you go back further but may use more memory; a value like 50-100 is a good balance.</li>
+                <li><b>Gates</b>: Change number of inputs for AND/OR/XOR gates.</li>
+                <li><b>MUX/DEMUX</b>: Adjust select bits to scale from 2-to-1 MUX up to 1-to-16 DEMUX.</li>
+                <li><b>Encoder/Decoder</b>: Scale from 4-to-2 Encoders up to 4-to-16 Decoders.</li>
+                <li><b>Annotations</b>: Add Text, Rectangles, and Circles to document your design.</li>
             </ul>
+
+            <h3>⚙️ Settings</h3>
+            <p>Configure <b>Preferences</b> for the current circuit (Grid, FPS, Canvas size). Use <b>Global Settings</b> to set your application-wide <b>Undo History Limit</b> (10-200 steps).</p>
         """
 
 ABOUT_TEXT = """
 <h2>Circuit Playground Pro</h2>
 
-<p>A visual logic circuit simulator.</p>
+<p>A professional-grade visual logic circuit simulator designed for precision and performance.</p>
 
-<p>Build and test digital logic circuits with gates like AND, OR, NOT, XOR, NAND, NOR, XNOR, MUX, DEMUX, Encoder, and Decoder.</p>
+<p><b>Features:</b></p>
+<ul>
+    <li>High-performance simulation engine</li>
+    <li>Virtual Truth Table Generator with CSV export</li>
+    <li>Robust Undo/Redo system with branching support</li>
+    <li>YAML serialization for compact, readable saves</li>
+</ul>
 
-<p><b>Version:</b> 3.0.0</p>
+<p><b>Version:</b> 3.1.0 (Advanced Audit Edition)</p>
 """
+

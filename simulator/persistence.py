@@ -1,5 +1,9 @@
+import logging
+
 import yaml
 from PySide6.QtWidgets import QMessageBox
+
+from core import calculate_rotated_pin_positions
 
 from .utils import ANNOTATION_CLASS_MAP, CLASS_MAP, ensure_uids_for_all
 
@@ -13,7 +17,7 @@ def load_global_settings(sim):
             settings = yaml.safe_load(f) or {}
             sim.max_history = settings.get("history_limit", sim.DEFAULT_HISTORY_LIMIT)
     except Exception as e:
-        print(f"Error loading settings: {e}")
+        logging.warning(f"Error loading settings: {e}")
 
 
 def save_global_settings(sim):
@@ -22,7 +26,7 @@ def save_global_settings(sim):
         with open(sim.SETTINGS_FILE, "w", encoding="utf-8") as f:
             yaml.safe_dump(settings, f, sort_keys=False)
     except Exception as e:
-        print(f"Error saving settings: {e}")
+        logging.error(f"Error saving settings: {e}")
 
 
 def get_save_state(sim):
@@ -188,8 +192,6 @@ def load_from_state(sim, state, apply_settings=True):
 
         sim.gates.append(gate)
         # calculate pins & add to canvas
-        from core import calculate_rotated_pin_positions
-
         calculate_rotated_pin_positions(gate)
         sim.canvas.add_gate(gate)
 

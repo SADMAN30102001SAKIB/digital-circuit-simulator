@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
-from simulator.truthtable import collect_influencing_inputs, generate_truth_table_iter
+from simulator.truthtable import collect_influencing_inputs
 
 
 class VirtualTruthTableModel(QAbstractTableModel):
@@ -125,38 +125,3 @@ class VirtualTruthTableModel(QAbstractTableModel):
         was_cached = idx in self._cache
         bits, out_val = self._ensure_cached(idx)
         return bits, out_val, was_cached
-
-    def write_csv(self, path, progress_callback=None, cancel_callback=None):
-        """Stream rows to CSV using cached rows when available to avoid re-evaluating
-        combinations that have already been computed by the view.
-
-        Progress callback may accept (done, total) or (done, total, cache_hits).
-        """
-        import csv
-
-        with open(path, "w", newline="") as f:
-            writer = csv.writer(f)
-            headers = [g.label or f"IN{i+1}" for i, g in enumerate(self.inputs)] + [
-                self.led.label or "LED"
-            ]
-            writer.writerow(headers)
-            total = self.rowCount()
-
-            for idx in range(total):
-                if cancel_callback and cancel_callback():
-                    return False
-
-                bits, out_val = self._ensure_cached(idx)
-
-                writer.writerow(
-                    ["1" if b else "0" for b in bits] + ["1" if out_val else "0"]
-                )
-
-                if progress_callback:
-                    # Prefer calling the 3-arg form, but fall back if caller expects only 2 args
-                    try:
-                        progress_callback(idx + 1, total, 0)
-                    except TypeError:
-                        progress_callback(idx + 1, total)
-
-        return True

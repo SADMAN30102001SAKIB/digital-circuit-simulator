@@ -1,12 +1,24 @@
+import csv
+import gc
 import logging
+import os
+import platform
+import subprocess
+import tempfile
+from datetime import datetime
+from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, QPoint, Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QMessageBox,
+    QProgressDialog,
     QPushButton,
+    QTableView,
     QVBoxLayout,
 )
 
@@ -46,25 +58,34 @@ class TruthTableDialog(QDialog):
         layout.addWidget(title_label)
 
         # Table area
-        from PySide6.QtWidgets import QTableView
-
+        # Table area
         headers = list(input_names) + [output_name]
 
         # Virtual model (required)
-        from PySide6.QtWidgets import QHeaderView
-
         table_view = QTableView()
         table_view.setModel(model)
 
-        # Center header alignment and set compact, fixed column width suitable for bits
+        # Center header alignment and set interactive width with minimum size
         h = table_view.horizontalHeader()
         h.setDefaultAlignment(Qt.AlignCenter)
-        h.setDefaultSectionSize(36)  # small, bit-friendly width
+        h.setMinimumSectionSize(40)
         try:
-            h.setSectionResizeMode(QHeaderView.Fixed)
+            h.setSectionResizeMode(QHeaderView.Interactive)
         except Exception:
             # Fall back if method unavailable in this Qt binding/version
-            pass
+            h.setStretchLastSection(True)
+
+        # Manually resize columns based on header text only to avoid scanning 65K+ rows
+        # This prevents the UI freeze reported with ResizeToContents.
+        try:
+            from PySide6.QtGui import QFontMetrics
+            fm = QFontMetrics(table_view.font())
+            for i, name in enumerate(headers):
+                # Calculate width of header text + some padding
+                w = fm.horizontalAdvance(name) + 24
+                table_view.setColumnWidth(i, max(40, w))
+        except Exception:
+            logging.exception("Failed to manually resize truth table columns")
 
         # Show vertical row numbers (1-based) and center them
         v = table_view.verticalHeader()
@@ -104,13 +125,6 @@ class TruthTableDialog(QDialog):
         The model provides `get_row(idx)` and `snapshot_cache_keys()` to keep
         the dialog ignorant of model internals.
         """
-        import os
-        import tempfile
-        from datetime import datetime
-        from pathlib import Path
-
-        from PySide6.QtWidgets import QProgressDialog
-
         model = getattr(self, "_model", None)
         if model is None:
             QMessageBox.information(
@@ -158,10 +172,6 @@ class TruthTableDialog(QDialog):
         # Chunked exporter (main-thread): iterate rows in small batches to avoid
         # touching Qt objects from worker threads (which can hang) and keep the UI
         # responsive without complex timer-based scheduling.
-        import csv
-
-        from PySide6.QtCore import QTimer
-
         total = model.rowCount()
 
         # Use an exact progress max from the start to prevent Qt from behaving oddly
@@ -178,8 +188,6 @@ class TruthTableDialog(QDialog):
             logging.exception("Failed to set progress dialog minimum width")
         # Center the progress dialog over the parent so it remains visually centered
         try:
-            from PySide6.QtCore import QPoint
-
             progress.adjustSize()
             parent_center = self.frameGeometry().center()
             pg = progress.frameGeometry()
@@ -391,29 +399,62 @@ class TruthTableDialog(QDialog):
                         self, "Exported", f"CSV exported to\n{Path(path)}\n\nOpen file?"
                     )
                     if resp == QMessageBox.Yes:
-                        try:
-                            from PySide6.QtCore import QUrl
-                            from PySide6.QtGui import QDesktopServices
+                        # 1. Linux Specific robust fallbacks FIRST (prevents Qt console warnings)
+                        if platform.system() == "Linux":
+                            # Detect WSL2
+                            is_wsl = False
+                            try:
+                                if os.path.exists("/proc/version"):
+                                    with open("/proc/version", "r") as f:
+                                        if "microsoft" in f.read().lower():
+                                            is_wsl = True
+                            except Exception:
+                                pass
 
+                            # Try wslview first (best for WSL2 users)
+                            try:
+                                if subprocess.call(["which", "wslview"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0:
+                                    subprocess.Popen(["wslview", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                    return
+                            except Exception:
+                                pass
+
+                            # If on WSL and wslview failed, try powershell bridge to Windows host
+                            if is_wsl:
+                                try:
+                                    # Convert Linux path to Windows path and launch via PS
+                                    win_path = subprocess.check_output(["wslpath", "-w", path]).decode().strip()
+                                    subprocess.Popen(["powershell.exe", "-Command", f"Start-Process '{win_path}'"], 
+                                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                    return
+                                except Exception:
+                                    pass
+
+                            # Try explicit xdg-open (fallback for native Linux desktop)
+                            try:
+                                if subprocess.call(["which", "xdg-open"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0:
+                                    subprocess.Popen(["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                    return
+                            except Exception:
+                                pass
+
+                        # 2. Try standard Qt service (works on Windows/Native Desktop Linux)
+                        try:
                             if QDesktopServices.openUrl(QUrl.fromLocalFile(path)):
                                 return
                         except Exception:
                             pass
 
+                        # 3. Windows Specific fallback
                         try:
-                            os.startfile(path)
-                            return
-                        except Exception:
-                            try:
-                                import subprocess
-
-                                subprocess.Popen(["xdg-open", path])
+                            if hasattr(os, "startfile"):
+                                os.startfile(path)
                                 return
-                            except Exception:
-                                pass
+                        except Exception:
+                            pass
 
                         QMessageBox.warning(
-                            self, "Open Failed", "Unable to open CSV file"
+                            self, "Open Failed", "Unable to open CSV file.\nPlease open it manually from:\n" + path
                         )
                     else:
                         if not saved_in_downloads:
@@ -485,9 +526,7 @@ class TruthTableDialog(QDialog):
                     )
                 try:
                     # If exported path looks like a temp file (not in Downloads), remove it
-                    from pathlib import Path as _P
-
-                    p = _P(self._exporting_path) if self._exporting_path else None
+                    p = Path(self._exporting_path) if self._exporting_path else None
                     if p and p.exists() and p.parent.name.lower() != "downloads":
                         try:
                             p.unlink()
@@ -506,8 +545,6 @@ class TruthTableDialog(QDialog):
             # Also delete any temporary CSV we created
             if getattr(self, "_temp_csv", None):
                 try:
-                    import os
-
                     os.remove(self._temp_csv)
                 except Exception:
                     logging.exception("Failed to remove temp_csv during cleanup")
@@ -518,13 +555,9 @@ class TruthTableDialog(QDialog):
         try:
             # Allow Qt to process any pending events/deferred deletions
             try:
-                from PySide6.QtCore import QCoreApplication
-
                 QCoreApplication.processEvents()
             except Exception:
                 logging.exception("Failed during QCoreApplication.processEvents()")
-
-            import gc
 
             gc.collect()
         except Exception:

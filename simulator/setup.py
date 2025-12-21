@@ -1,60 +1,71 @@
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QToolBar
 
+import simulator.persistence as persistence
+
 
 def setup_toolbar(sim):
     toolbar = QToolBar("Main Toolbar")
     toolbar.setMovable(False)
     sim.addToolBar(toolbar)
 
-    action_new = QAction("New", sim)
-    action_new.setShortcut(QKeySequence.New)
-    action_new.setToolTip("New circuit (Ctrl+N)")
-    action_new.triggered.connect(sim.new_circuit)
-    toolbar.addAction(action_new)
+    sim.action_new = QAction("New", sim)
+    sim.action_new.setShortcut(QKeySequence.New)
+    sim.action_new.setToolTip("New circuit (Ctrl+N)")
+    sim.action_new.triggered.connect(sim.new_circuit)
+    toolbar.addAction(sim.action_new)
 
-    action_save = QAction("Save", sim)
-    action_save.setShortcut(QKeySequence.Save)
-    action_save.setToolTip("Save circuit (Ctrl+S)")
-    action_save.triggered.connect(
-        lambda: __import__("simulator").persistence.save_circuit(sim)
-    )
-    toolbar.addAction(action_save)
+    sim.action_save = QAction("Save", sim)
+    sim.action_save.setShortcut(QKeySequence.Save)
+    sim.action_save.setToolTip("Save circuit (Ctrl+S)")
+    sim.action_save.triggered.connect(lambda: persistence.save_circuit(sim))
+    toolbar.addAction(sim.action_save)
 
-    action_load = QAction("Load", sim)
-    action_load.setShortcut("Ctrl+L")
-    action_load.setToolTip("Load circuit (Ctrl+L)")
-    action_load.triggered.connect(
-        lambda: __import__("simulator").persistence.load_circuit(sim)
-    )
-    toolbar.addAction(action_load)
+    sim.action_load = QAction("Load", sim)
+    sim.action_load.setShortcut("Ctrl+L")
+    sim.action_load.setToolTip("Load circuit (Ctrl+L)")
+    sim.action_load.triggered.connect(lambda: persistence.load_circuit(sim))
+    toolbar.addAction(sim.action_load)
 
     toolbar.addSeparator()
 
-    action_undo = QAction("Undo", sim)
-    action_undo.setShortcut(QKeySequence.Undo)
-    action_undo.setToolTip("Undo (Ctrl+Z)")
-    action_undo.triggered.connect(sim.undo)
-    toolbar.addAction(action_undo)
+    sim.action_undo = QAction("Undo", sim)
+    sim.action_undo.setShortcut(QKeySequence.Undo)
+    sim.action_undo.setToolTip("Undo (Ctrl+Z)")
+    sim.action_undo.triggered.connect(sim.undo)
+    toolbar.addAction(sim.action_undo)
 
-    action_redo = QAction("Redo", sim)
-    action_redo.setShortcut(QKeySequence.Redo)
-    action_redo.setToolTip("Redo (Ctrl+Y)")
-    action_redo.triggered.connect(sim.redo)
-    toolbar.addAction(action_redo)
+    sim.action_redo = QAction("Redo", sim)
+    import platform
+    current_os = platform.system()
+    if current_os == "Linux":
+        # On Linux, QKeySequence.Redo is usually Ctrl+Shift+Z. 
+        # We explicitly add Ctrl+Y for parity with the Windows experience.
+        sim.action_redo.setShortcuts([QKeySequence.Redo, "Ctrl+Y"])
+    elif current_os == "Darwin":
+        # On Mac, Redo is always Command+Shift+Z
+        sim.action_redo.setShortcut("Ctrl+Shift+Z") # Qt translates Ctrl to Cmd on Mac
+    else:
+        # On Windows, QKeySequence.Redo already includes Ctrl+Y.
+        sim.action_redo.setShortcut(QKeySequence.Redo)
+        
+    sim.action_redo.setToolTip("Redo (Ctrl+Shift+Z)")
+    sim.action_redo.triggered.connect(sim.redo)
+    toolbar.addAction(sim.action_redo)
 
     toolbar.addSeparator()
 
-    action_reset = QAction("Reset View", sim)
-    action_reset.setToolTip("Reset view (R)")
-    action_reset.triggered.connect(sim.canvas.reset_view)
-    toolbar.addAction(action_reset)
+    sim.action_reset = QAction("Reset View", sim)
+    sim.action_reset.setShortcut("R")
+    sim.action_reset.setToolTip("Reset view (R)")
+    sim.action_reset.triggered.connect(sim.canvas.reset_view)
+    toolbar.addAction(sim.action_reset)
 
-    action_delete = QAction("Delete", sim)
-    action_delete.setShortcut(QKeySequence.Delete)
-    action_delete.setToolTip("Delete selected (Del)")
-    action_delete.triggered.connect(sim.delete_selected)
-    toolbar.addAction(action_delete)
+    sim.action_delete = QAction("Delete", sim)
+    sim.action_delete.setShortcut(QKeySequence.Delete)
+    sim.action_delete.setToolTip("Delete selected (Del)")
+    sim.action_delete.triggered.connect(sim.delete_selected)
+    toolbar.addAction(sim.action_delete)
 
 
 def setup_statusbar(sim):
@@ -71,26 +82,24 @@ def setup_menu(sim):
     menubar = sim.menuBar()
 
     file_menu = menubar.addMenu("&File")
-    file_menu.addAction("&New (Ctrl+N)", sim.new_circuit)
-    file_menu.addAction(
-        "&Save (Ctrl+S)", lambda: __import__("simulator").persistence.save_circuit(sim)
-    )
-    file_menu.addAction(
-        "&Load (Ctrl+L)", lambda: __import__("simulator").persistence.load_circuit(sim)
-    )
+    file_menu.addAction(sim.action_new)
+    file_menu.addAction(sim.action_save)
+    file_menu.addAction(sim.action_load)
     file_menu.addSeparator()
-    file_menu.addAction("E&xit", sim.close)
+    exit_action = QAction("E&xit", sim)
+    exit_action.setMenuRole(QAction.MenuRole.QuitRole)
+    exit_action.triggered.connect(sim.close)
+    file_menu.addAction(exit_action)
 
     edit_menu = menubar.addMenu("&Edit")
-    edit_menu.addAction("&Undo (Ctrl+Z)", sim.undo)
-    edit_menu.addAction("&Redo (Ctrl+Y)", sim.redo)
+    edit_menu.addAction(sim.action_undo)
+    edit_menu.addAction(sim.action_redo)
     edit_menu.addSeparator()
-    edit_menu.addAction("&Delete (Del)", sim.delete_selected)
+    edit_menu.addAction(sim.action_delete)
 
     view_menu = menubar.addMenu("&View")
 
-    action_reset = view_menu.addAction("&Reset View", sim.canvas.reset_view)
-    action_reset.setShortcut("R")
+    view_menu.addAction(sim.action_reset)
 
     action_grid = view_menu.addAction("Toggle &Grid", sim._toggle_grid)
     action_grid.setShortcut("G")
@@ -106,9 +115,17 @@ def setup_menu(sim):
     action_props.setShortcut("P")
 
     settings_menu = menubar.addMenu("&Settings")
-    settings_menu.addAction("&Preferences...", sim._show_settings)
+    pref_action = QAction("&Preferences...", sim)
+    pref_action.setMenuRole(QAction.MenuRole.PreferencesRole)
+    pref_action.triggered.connect(sim._show_settings)
+    settings_menu.addAction(pref_action)
+    
     settings_menu.addAction("&Global Settings...", sim._show_global_settings)
 
     help_menu = menubar.addMenu("&Help")
     help_menu.addAction("&How to Use", sim._show_help)
-    help_menu.addAction("&About", sim._show_about)
+    
+    about_action = QAction("&About", sim)
+    about_action.setMenuRole(QAction.MenuRole.AboutRole)
+    about_action.triggered.connect(sim._show_about)
+    help_menu.addAction(about_action)

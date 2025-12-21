@@ -1,7 +1,7 @@
 import gc
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, Qt, QTimer, Slot
+from PySide6.QtCore import QCoreApplication, Qt, QTimer, Slot, QStandardPaths
 from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox, QPushButton
 
 from assets.help_text import ABOUT_TEXT, HELP_TEXT
@@ -44,7 +44,7 @@ from .persistence import (
     save_global_settings,
 )
 from .setup import setup_menu, setup_statusbar, setup_toolbar
-from .truthtable import collect_influencing_inputs, generate_truth_table_iter
+from .truthtable import collect_influencing_inputs
 
 
 class CircuitSimulator(QMainWindow):
@@ -73,9 +73,6 @@ class CircuitSimulator(QMainWindow):
     # Annotation classes for type checking
     ANNOTATION_CLASSES = (TextAnnotation, RectangleAnnotation, CircleAnnotation)
 
-    SAVE_DIR = Path("save_files")
-    SETTINGS_FILE = SAVE_DIR / "settings.yaml"
-    CIRCUITS_DIR = SAVE_DIR / "circuits"
 
     DEFAULT_CANVAS_SIZE = 10000
     DEFAULT_GRID_SIZE = 20
@@ -86,10 +83,26 @@ class CircuitSimulator(QMainWindow):
         super().__init__()
         self.setWindowTitle("Circuit Playground Pro")
         self.resize(1400, 800)
+        # Setup Directories in User Documents with robust fallback
+        docs = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+        if docs:
+            self.SAVE_DIR = Path(docs) / "CircuitPlaygroundPro"
+        else:
+            self.SAVE_DIR = Path("save_files")
 
-        # Ensure directories exist
-        self.SAVE_DIR.mkdir(exist_ok=True)
-        self.CIRCUITS_DIR.mkdir(exist_ok=True)
+        try:
+            self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            # Fallback if Documents folder is restricted or malformed
+            print(f"Warning: Could not use Documents folder ({e}). Falling back to local 'save_files'.")
+            self.SAVE_DIR = Path("save_files")
+            self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+        self.SETTINGS_FILE = self.SAVE_DIR / "settings.yaml"
+        self.CIRCUITS_DIR = self.SAVE_DIR / "circuits"
+
+        # Ensure circuits directory exists
+        self.CIRCUITS_DIR.mkdir(parents=True, exist_ok=True)
 
         # Circuit state
         self.gates = []
@@ -243,6 +256,10 @@ class CircuitSimulator(QMainWindow):
     @Slot(object, str)
     def _on_component_selected(self, component_class, name):
         component = component_class(0, 0)
+        
+        # Assign default label to new inputs
+        if component.name == "INPUT" and not getattr(component, "label", None):
+            component.label = self._generate_default_input_label()
         if isinstance(
             component, (TextAnnotation, RectangleAnnotation, CircleAnnotation)
         ):
@@ -439,6 +456,24 @@ class CircuitSimulator(QMainWindow):
 
         self._recreate_component(gate, Decoder, new_inputs)
 
+    def _generate_default_input_label(self):
+        """Find the next available INx label for a new input switch"""
+        existing_nums = set()
+        for g in self.gates:
+            label = getattr(g, "label", None)
+            if g.name == "INPUT" and label and label.startswith("IN"):
+                try:
+                    num = int(label[2:])
+                    existing_nums.add(num)
+                except ValueError:
+                    pass
+        
+        # Find the smallest positive integer not in use
+        num = 1
+        while num in existing_nums:
+            num += 1
+        return f"IN{num}"
+
     def _recreate_component(self, old_gate, gate_class, *args):
         """Helper to recreate a component with new parameters"""
         old_rotation = old_gate.rotation
@@ -569,6 +604,11 @@ class CircuitSimulator(QMainWindow):
         """Save current state for undo/redo"""
         state = self.get_save_state()
 
+        # If we are branching (making a change while index is not at the end),
+        # any "future" saved state is now lost.
+        if self.saved_history_index > self.history_index:
+            self.saved_history_index = -1
+
         # Remove future states
         self.history = self.history[: self.history_index + 1]
 
@@ -576,7 +616,12 @@ class CircuitSimulator(QMainWindow):
         self.history.append(state)
         if len(self.history) > self.max_history:
             self.history.pop(0)
+            # Since the list shifted, we must decrement the saved index.
+            # If it was 0, it becomes -1 (saved state is no longer in history).
+            if self.saved_history_index != -1:
+                self.saved_history_index -= 1
         else:
+            # history_index only increases if we didn't pop from the front
             self.history_index += 1
 
     def restore_state(self, state):
@@ -727,6 +772,7 @@ class CircuitSimulator(QMainWindow):
                     matched = g
                     break
 
+        # Restore selected gate and properties
         if matched:
             self.selected_gate = matched
             self.selected_annotation = None
@@ -735,11 +781,7 @@ class CircuitSimulator(QMainWindow):
             if matched in self.canvas.gate_items:
                 self.canvas.gate_items[matched].setSelected(True)
         else:
-            self.property_panel.refresh_component_list()
-
-        if self.selected_gate:
-            self.property_panel.set_target(self.selected_gate)
-        else:
+            self.selected_gate = None
             self.property_panel.refresh_component_list()
 
     def closeEvent(self, event):

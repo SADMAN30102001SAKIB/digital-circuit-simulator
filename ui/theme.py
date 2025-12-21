@@ -148,6 +148,16 @@ QDockWidget::close-button, QDockWidget::float-button {
     background: transparent;
 }
 
+/* Scroll Area */
+QScrollArea {
+    background-color: #191B1F;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #191B1F;
+}
+
 /* List Widgets */
 QListWidget {
     background-color: #191B1F;
@@ -228,7 +238,6 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
     background: none;
 }
 
-/* Line Edit */
 QLineEdit {
     background-color: #28292E;
     color: #DCDCE1;
@@ -239,17 +248,27 @@ QLineEdit {
     selection-background-color: #5096FF;
 }
 
-QLineEdit:focus {
+QPlainTextEdit {
+    background-color: #28292E;
+    color: #DCDCE1;
+    border: 2px solid #3C3E44;
+    border-radius: 6px;
+    padding: 8px 12px; /* Standardized to match QLineEdit */
+    font-size: 13px;
+    selection-background-color: #5096FF;
+}
+
+QLineEdit:focus, QPlainTextEdit:focus {
     border-color: #5096FF;
 }
 
-QLineEdit:disabled {
+QLineEdit:disabled, QPlainTextEdit:disabled {
     background-color: #1E1E23;
     color: #5E6066;
 }
 
 /* Labels */
-QLabel {
+QLabel, QCheckBox {
     color: #DCDCE1;
     font-size: 13px;
     background-color: transparent;
@@ -275,8 +294,17 @@ QSpinBox, QDoubleSpinBox {
     font-size: 13px;
 }
 
-QSpinBox:focus, QDoubleSpinBox:focus {
+QSpinBox:focus, QDoubleSpinBox:focus, QFontComboBox:focus {
     border-color: #5096FF;
+}
+
+/* Font Combo Box Fix */
+QFontComboBox {
+    background-color: #28292E;
+    color: #DCDCE1;
+    border: 2px solid #3C3E44;
+    border-radius: 6px;
+    padding: 4px 8px;
 }
 
 /* Hide up/down buttons and arrows for a cleaner look */
@@ -301,7 +329,7 @@ QGroupBox {
     border: 2px solid #3C3E44;
     border-radius: 8px;
     margin-top: 12px;
-    padding-top: 16px;
+    padding-top: 12px; /* Reduced from 16px */
     font-weight: bold;
 }
 
