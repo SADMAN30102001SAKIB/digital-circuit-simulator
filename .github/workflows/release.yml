@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install dependencies
+      run: uv sync --extra test
+
+    - name: Install Linux system dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libegl1 \
+          libopengl0 \
+          libxcb-cursor0 \
+          libxcb-icccm4 \
+          libxcb-keysyms1 \
+          libxcb-image0 \
+          libxcb-shm0 \
+          libxcb-render-util0 \
+          libxcb-xkb1 \
+          libxkbcommon-x11-0 \
+          libxcb-shape0 \
+          libxcb-util1 \
+          libxcb-xinerama0 \
+          libxcb-xinput0
+
+    - name: Run build script
+      run: uv run python build.py --spec-filter --exclude-qt --exclude-module pygame
+
+    - name: Prepare Artifact (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        move dist\CircuitPlaygroundPro.exe CircuitPlaygroundPro-Windows-${{ github.ref_name }}.exe
+
+    - name: Prepare Artifact (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-Linux-${{ github.ref_name }}
+        chmod +x CircuitPlaygroundPro-Linux-${{ github.ref_name }}
+
+    - name: Prepare Artifact (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-macOS-${{ github.ref_name }}
+        chmod +x CircuitPlaygroundPro-macOS-${{ github.ref_name }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary-${{ matrix.os }}
+        path: CircuitPlaygroundPro-*
+        if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/CircuitPlaygroundPro-*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
