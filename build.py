@@ -138,9 +138,8 @@ def main(argv=None):
         "--windowed",
         "--clean",
         "--noconfirm",
+        "--strip",
     ]
-    if not IS_WIN:
-        build_args.append("--strip")
 
     build_args.extend(
         [
