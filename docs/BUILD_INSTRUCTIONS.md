@@ -8,7 +8,7 @@ Choose your build weapon:
 
 | Method | Best For | Command |
 | :--- | :--- | :--- |
-| **Standard (PyInstaller)** | Fast testing & tiny folder sizes | `python build.py --spec-filter --exclude-qt` |
+| **Standard (PyInstaller)** | Fast testing & tiny executable sizes | `python build.py --spec-filter --exclude-qt` |
 | **Compiler (Nuitka)** | Best RAM performance & security | `python nuitka_build.py --onefile` |
 
 ---
