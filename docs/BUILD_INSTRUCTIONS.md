@@ -16,8 +16,6 @@ Choose your build weapon:
 ## 📦 Method 1: PyInstaller (Fast & Flexible)
 This is the recommended way for most users.
 
-## 🐧 Linux Setup (Ubuntu/Debian)
-
 ### Option A: Using `uv` (Recommended 🚀)
 1. **Install uv**:
    - **Windows (PowerShell)**:
