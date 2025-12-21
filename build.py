@@ -141,12 +141,14 @@ def main(argv=None):
     ]
     if not IS_WIN:
         build_args.append("--strip")
-    
-    build_args.extend([
-        f"--add-data=core{SEP}core",
-        f"--add-data=ui{SEP}ui",
-        f"--add-data=assets{SEP}assets",
-    ])
+
+    build_args.extend(
+        [
+            f"--add-data=core{SEP}core",
+            f"--add-data=ui{SEP}ui",
+            f"--add-data=assets{SEP}assets",
+        ]
+    )
 
     # Handle Icon
     icon_ext = ".ico" if not IS_MAC else ".icns"
