@@ -46,7 +46,7 @@ This sometimes gets created when you run `build.py`.
 ## 🚀 Distribution Checklist
 
 - **One-File Delivery**: If using `--onefile`, you only need to send the single executable.
-- **Folder Delivery**: If using `--onedir`, you **MUST** send the entire folder. We recommend zipping it first (Right-click > Compress/Zip).
+- **Folder Delivery**: If using `--onedir`, you **MUST** send the entire folder. I recommend zipping it first (Right-click > Compress/Zip).
 - **User Permissions**: Saved circuits and settings are stored in the user's **Documents** folder:
     - **Windows**: `C:\Users\<User>\Documents\CircuitPlaygroundPro`
     - **macOS**: `/Users/<User>/Documents/CircuitPlaygroundPro`

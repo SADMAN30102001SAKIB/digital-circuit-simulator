@@ -61,7 +61,7 @@ uv run python -m pytest tests/
 ```
 
 ### 🧹 Quality Control (Linter)
-We use **Ruff** for sub-second linting and formatting. 
+I use **Ruff** for sub-second linting and formatting. 
 ```bash
 # Check for errors and auto-fixable issues
 uv run ruff check . --fix
@@ -103,7 +103,7 @@ In previous versions, generating a Truth Table for a 16-input circuit (65,536 ro
 The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engine using a **Model-View Architecture**:
 
 1.  **Lazy Loading (`QAbstractTableModel`)**: Instead of pre-creating millions of widgets, the app now uses a virtual model. It only "renders" the data for the specific cells currently visible on your screen. This dropped the active memory footprint from 800MB down to a stable **~75MB**.
-2.  **Deterministic Cleanup**: Python's garbage collector doesn't always reclaim C++ resources immediately. We implemented a centralized `_cleanup()` routine that explicitly detaches models, clears temporary export files, and triggers `gc.collect()` upon closing the dialog.
+2.  **Deterministic Cleanup**: Python's garbage collector doesn't always reclaim C++ resources immediately. I implemented a centralized `_cleanup()` routine that explicitly detaches models, clears temporary export files, and triggers `gc.collect()` upon closing the dialog.
 
 **Result**: Professional-grade performance where analysis remains snappy even as circuit complexity grows exponentially.
 
@@ -117,6 +117,7 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 - **Version**: 3.1.0 (Professional Edition)
 - **Engine**: PySide6 (Qt)
 - **Quality**: Verified by 27+ tests & Ruff Linting (PEP 8)
+- **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
 - **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
 - **Health**: 100% (Includes `MIT License`, `Code of Conduct`, and `Contribution Guidelines`)
 - **Persistence**: YAML structure with stable UIDs.

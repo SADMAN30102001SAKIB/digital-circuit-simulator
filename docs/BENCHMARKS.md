@@ -63,7 +63,7 @@ Without UPX compression, a standard folder build is **~111 MB**. With UPX, it dr
 
 ### 4. Windows vs. Linux: The Size Gap
 You might notice Linux builds are consistently larger. This is normal and unavoidable for three reasons:
-*   **Batteries Included**: Windows has built-in system DLLs (`kernel32`, `user32`) that we assume exist. Linux has many distributions, so we must bundle basic system libraries (`libstdc++`, `liblzma`) to ensure the app runs on any distro.
+*   **Batteries Included**: Windows has built-in system DLLs (`kernel32`, `user32`) that I assume exist. Linux has many distributions, so we must bundle basic system libraries (`libstdc++`, `liblzma`) to ensure the app runs on any distro.
 *   **The GUI Stack**: On Windows, the window manager is part of the kernel. On Linux, we must bundle a heavy chain of X11 libraries (`libxcb`, `libX11`, etc.) just to draw a window.
 *   **Portable Runtime**: Nuitka/PyInstaller bundle a private copy of the C runtime for Linux compatibility, adding ~10MB overhead that Windows builds don't need.
 

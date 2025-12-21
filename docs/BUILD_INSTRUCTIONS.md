@@ -114,7 +114,7 @@ Nuitka translates your Python code into C++ and compiles it into a native binary
 ---
 
 ## 📊 Benchmarks & Analysis
-For detailed data and analysis, check out our full **[Size & Performance Report](BENCHMARKS.md)**
+For detailed data and analysis, check out my full **[Size & Performance Report](BENCHMARKS.md)**
 
 ---
 
