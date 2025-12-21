@@ -1,0 +1,56 @@
+name: "🐛 Bug Report"
+description: Create a new ticket for a bug.
+title: "🐛 [BUG] - <title>"
+labels: [
+  "bug"
+]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: Please enter an explicit description of your issue
+      placeholder: Short and explicit description of your incident...
+    validations:
+      required: true
+  - type: textarea
+    id: reprod
+    attributes:
+      label: "Reproduction steps"
+      description: How do we trigger this bug?
+      value: |
+        1. Go to '...'
+        2. Click on '....'
+        3. See error
+      render: markdown
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: "OS"
+      description: What system are you using?
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: "Version"
+      description: Which build of CircuitPro?
+      options:
+        - v3.1.0
+        - v3.0.0
+        - Other (Manual Build)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs / Screenshots"
+      description: Paste any error messages or drag-and-drop screenshots here.
+    validations:
+      required: false
