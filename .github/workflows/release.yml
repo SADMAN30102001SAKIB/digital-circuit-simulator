@@ -56,7 +56,7 @@ jobs:
 
     - name: Run build script (Windows)
       if: runner.os == 'Windows'
-      run: uv run python build.py --spec-filter --exclude-qt --exclude-module pygame --no-upx
+      run: uv run python build.py --onefile --no-upx
 
     - name: Run build script (Unix)
       if: runner.os != 'Windows'
