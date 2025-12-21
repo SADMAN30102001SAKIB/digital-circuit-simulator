@@ -93,16 +93,16 @@ def main(argv=None):
     # Entry Point
     cmd.append("app.py")
 
-    print("🚀 Starting Experimental Nuitka Build...")
+    print("[BUILD] Starting Nuitka Build...")
     print(f"Command: {' '.join(cmd)}\n")
 
     try:
         subprocess.check_call(cmd)
         print(
-            "\n✅ Build complete! Check app.dist (or the executable in project root if onefile)"
+            "\n[SUCCESS] Build complete! Check app.dist (or the executable in project root if onefile)"
         )
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Nuitka build failed with exit code {e.returncode}")
+        print(f"\n[ERROR] Nuitka build failed with exit code {e.returncode}")
         sys.exit(e.returncode)
 
 
