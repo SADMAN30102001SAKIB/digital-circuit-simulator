@@ -39,6 +39,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          patchelf \
+          ccache \
           libegl1 \
           libopengl0 \
           libxcb-cursor0 \
@@ -54,30 +56,41 @@ jobs:
           libxcb-xinerama0 \
           libxcb-xinput0
 
+    - name: Install macOS system dependencies
+      if: runner.os == 'macOS'
+      run: brew install ccache
+
     - name: Run build script (Windows)
       if: runner.os == 'Windows'
-      run: uv run python build.py --exclude-qt --exclude-module pygame
+      run: |
+        uv run python build.py --exclude-qt --exclude-module pygame
+        uv run python nuitka_build.py --onefile --name CircuitPlaygroundPro-Native
 
     - name: Run build script (Unix)
       if: runner.os != 'Windows'
-      run: uv run python build.py --spec-filter --exclude-qt --exclude-module pygame
+      run: |
+        uv run python build.py --spec-filter --exclude-qt --exclude-module pygame
+        uv run python nuitka_build.py --onefile --name CircuitPlaygroundPro-Native
 
     - name: Prepare Artifact (Windows)
       if: runner.os == 'Windows'
       run: |
         move dist\CircuitPlaygroundPro.exe CircuitPlaygroundPro-Windows-${{ github.ref_name }}.exe
+        move CircuitPlaygroundPro-Native.exe CircuitPlaygroundPro-Native-Windows-${{ github.ref_name }}.exe
 
     - name: Prepare Artifact (Linux)
       if: runner.os == 'Linux'
       run: |
         mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-Linux-${{ github.ref_name }}
-        chmod +x CircuitPlaygroundPro-Linux-${{ github.ref_name }}
+        mv CircuitPlaygroundPro-Native CircuitPlaygroundPro-Native-Linux-${{ github.ref_name }}
+        chmod +x CircuitPlaygroundPro-*
 
     - name: Prepare Artifact (macOS)
       if: runner.os == 'macOS'
       run: |
         mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-macOS-${{ github.ref_name }}
-        chmod +x CircuitPlaygroundPro-macOS-${{ github.ref_name }}
+        mv CircuitPlaygroundPro-Native CircuitPlaygroundPro-Native-macOS-${{ github.ref_name }}
+        chmod +x CircuitPlaygroundPro-*
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

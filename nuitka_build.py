@@ -86,8 +86,9 @@ def main(argv=None):
         cmd.append("--onefile")
 
     # Include Data Folders (Non-Python assets)
-    if Path("assets").exists():
-        cmd.append("--include-data-dir=assets=assets")
+    for folder in ["assets", "core", "ui"]:
+        if Path(folder).exists():
+            cmd.append(f"--include-data-dir={folder}={folder}")
 
     # Entry Point
     cmd.append("app.py")
