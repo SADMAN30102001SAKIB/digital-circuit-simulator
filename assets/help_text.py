@@ -62,5 +62,5 @@ ABOUT_TEXT = """
     <li>YAML serialization for compact, readable saves</li>
 </ul>
 
-<p><b>Version:</b> 3.1.0 (Advanced Audit Edition)</p>
+<p><b>Version:</b> 3.1.1 (Advanced Audit Edition)</p>
 """

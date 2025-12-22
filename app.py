@@ -24,7 +24,7 @@ def main():
     # Set application info
     app.setApplicationName("Circuit Playground Pro")
     app.setOrganizationName("Circuit Simulator")
-    app.setApplicationVersion("3.1.0")
+    app.setApplicationVersion("3.1.1")
 
     # Set application icon
     icon_path = get_resource_path("assets/icon.ico")
