@@ -9,7 +9,7 @@ This release culminates a complete codebase audit, bringing optimized size (~22M
 
 *   *NOTE: After the download completes, the browser might flag the file as "unsafe". Click "Keep" -> "Keep Anyway"*
 
-We provide **8 different versions** to suit every need. Here is how to pick the right one:
+We provide **12 different versions** to suit every need. Here is how to pick the right one:
 
 ## 📥 Unified Download List
 
