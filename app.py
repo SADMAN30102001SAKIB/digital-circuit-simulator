@@ -17,7 +17,9 @@ def main():
 
     # Setup Logging in User Documents
     docs = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
-    app_dir = Path(docs) / "CircuitPlaygroundPro" if docs else Path("CircuitPlaygroundPro")
+    app_dir = (
+        Path(docs) / "CircuitPlaygroundPro" if docs else Path("CircuitPlaygroundPro")
+    )
     app_dir.mkdir(parents=True, exist_ok=True)
     setup_logging(app_dir / "simulator.log")
 
