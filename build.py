@@ -398,6 +398,22 @@ def main(argv=None):
         if prune_script.exists():
             print(f"Running prune script on {dist_path}")
             subprocess.check_call([sys.executable, str(prune_script), str(dist_path)])
+
+    # Ad-hoc Code Signing for macOS
+    if IS_MAC:
+        bundle_path = Path("dist") / f"{args.name}.app"
+        if bundle_path.exists() and bundle_path.is_dir():
+            print(f"Applying ad-hoc code signature to {bundle_path}...")
+            try:
+                subprocess.run(
+                    ["codesign", "--force", "--deep", "--sign", "-", str(bundle_path)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                print("Ad-hoc signature applied successfully.")
+            except Exception as e:
+                print(f"Warning: Ad-hoc signing failed: {e}")
             print("✅ Prune complete.")
 
     print(f"\n[SUCCESS] Build complete! Check dist/{args.name}")

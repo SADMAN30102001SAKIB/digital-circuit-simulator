@@ -182,7 +182,7 @@ def main(argv=None):
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.1.2</string>
+    <string>3.1.3</string>
 </dict>
 </plist>
 """
@@ -190,6 +190,35 @@ def main(argv=None):
                     f.write(plist_content)
 
                 print(f"[SUCCESS] Hand-crafted .app bundle created at {bundle_path}")
+
+        # Ad-hoc Code Signing (Mac only)
+        if is_mac:
+            bundle_path = Path(f"{args.name}.app")
+            if bundle_path.exists() and bundle_path.is_dir():
+                print(f"[INFO] Applying ad-hoc code signature to {bundle_path}...")
+                try:
+                    subprocess.run(
+                        [
+                            "codesign",
+                            "--force",
+                            "--deep",
+                            "--sign",
+                            "-",
+                            str(bundle_path),
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    print(
+                        f"[SUCCESS] Ad-hoc signature applied. '_CodeSignature' folder generated."
+                    )
+                except subprocess.CalledProcessError as e:
+                    print(f"[WARNING] Ad-hoc signing failed: {e.stderr}")
+                except FileNotFoundError:
+                    print(
+                        f"[WARNING] 'codesign' utility not found. Skipping signature."
+                    )
 
         print(f"\n[SUCCESS] Build complete! Artifact name: {args.name}")
     except subprocess.CalledProcessError as e:

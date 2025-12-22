@@ -26,7 +26,7 @@ def main():
     # Set application info
     app.setApplicationName("Circuit Playground Pro")
     app.setOrganizationName("Circuit Simulator")
-    app.setApplicationVersion("3.1.2")
+    app.setApplicationVersion("3.1.3")
 
     # Set application icon (Platform-specific priority)
     icon_candidates = ["assets/icon.png", "assets/icon.icns", "assets/icon.ico"]

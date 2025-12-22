@@ -181,7 +181,7 @@ jobs:
         name: CircuitPlaygroundPro ${{ github.ref_name }}
         body_path: .github/release_template.md
         files: artifacts/CircuitPlaygroundPro-*
-        generate_release_notes: true
+        generate_release_notes: false
         draft: true
         prerelease: false
       env:
