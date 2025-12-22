@@ -141,6 +141,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        name: CircuitPlaygroundPro ${{ github.ref_name }}
+        body_path: .github/release_template.md
         files: artifacts/CircuitPlaygroundPro-*
         generate_release_notes: true
         draft: true
