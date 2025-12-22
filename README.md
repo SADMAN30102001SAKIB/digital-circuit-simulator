@@ -4,7 +4,7 @@ Modern, professional logic circuit simulator built with **PySide6** (Qt for Pyth
 
 ## 🚀 Key Features
 
-- **100% Verified Logic**: Comprehensive test suite ensuring 38+ edge cases are error-free.
+- **100% Verified Logic**: Comprehensive test suite ensuring 57+ edge cases are error-free.
 - **Modern UI/UX**: Sleek dark theme with professional QSS styling.
 - **High-Performance Canvas**: Smooth rendering with anti-aliasing and smart zoom/pan.
 - **Smart Component Naming**: Automated label generation for inputs (`IN1`, `IN2`, etc.) used across the canvas and truth tables.

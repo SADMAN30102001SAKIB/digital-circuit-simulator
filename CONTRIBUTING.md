@@ -52,8 +52,7 @@ The process described here has several goals:
 ### Python Style
 
 - Follow PEP 8 guidelines.
-- Use `black` for formatting.
-- Use `isort` for import sorting.
+- Use **Ruff** for sub-second linting and auto-formatting.
 - Type hints are strongly encouraged.
 
 ## Attribution
