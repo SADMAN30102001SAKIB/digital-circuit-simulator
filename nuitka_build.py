@@ -99,35 +99,50 @@ def main(argv=None):
     try:
         subprocess.check_call(cmd)
 
-        # Post-build renaming for 'onedir' mode
-        if not args.onefile:
-            default_dist = Path("app.dist")
-            target_dist = Path(f"{args.name}.dist")
-            if target_dist.exists():
-                import shutil
+        # Post-build renaming
+        # Nuitka defaults to 'app.dist' or 'app.app' because the script is 'app.py'
+        # We need to rename these to the user-specified name so the release script finds them.
+        import shutil
+        import time
 
-                shutil.rmtree(target_dist)
+        # We check for both .dist (Linux/Win/Mac) and .app (Mac)
+        extensions = [".dist", ".app"]
+        if is_win and args.onefile:
+            # On Windows onefile, Nuitka creates {args.name}.exe directly if --output-filename is used
+            # but sometimes it might still be app.exe if flags are wonky.
+            extensions.append(".exe")
+        elif (is_linux or is_mac) and args.onefile:
+            # On Unix onefile, it might be {args.name} or {args.name}.bin
+            extensions.append(".bin")
+            extensions.append("")  # No extension
 
-            # Retry rename on Windows (file locking issues)
-            import time
+        for ext in extensions:
+            # We look for 'app' prefix as it's the script name
+            default_path = Path(f"app{ext}")
+            target_path = Path(f"{args.name}{ext}")
 
-            for i in range(5):
-                try:
-                    default_dist.rename(target_dist)
-                    print(f"[INFO] Renamed build artifact to {target_dist}")
-                    break
-                except PermissionError:
-                    if i == 4:
-                        print(
-                            f"[WARNING] Could not rename {default_dist} to {target_dist}. Check permissions."
-                        )
-                        print(f"Build is located at: {default_dist}")
+            # Also check if it's already named correctly but might need moving (rare)
+            # and verify we don't overwrite target with itself
+            if default_path.exists() and default_path != target_path:
+                if target_path.exists():
+                    if target_path.is_dir():
+                        shutil.rmtree(target_path)
                     else:
-                        time.sleep(1)
+                        target_path.unlink()
 
-        print(
-            f"\n[SUCCESS] Build complete! Check {args.name}.dist (onedir) or {args.name}.exe (onefile)"
-        )
+                print(f"[INFO] Renaming {default_path} to {target_path}...")
+                for i in range(5):
+                    try:
+                        default_path.rename(target_path)
+                        print(f"[INFO] Successfully renamed to {target_path}")
+                        break
+                    except (PermissionError, OSError) as e:
+                        if i == 4:
+                            print(f"[WARNING] Could not rename {default_path}: {e}")
+                        else:
+                            time.sleep(1)
+
+        print(f"\n[SUCCESS] Build complete! Artifact name: {args.name}")
     except subprocess.CalledProcessError as e:
         print(f"\n[ERROR] Nuitka build failed with exit code {e.returncode}")
         sys.exit(e.returncode)

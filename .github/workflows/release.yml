@@ -135,26 +135,44 @@ jobs:
 
         # --- MAC HANDLING (All .app Bundles -> Zips) ---
         if [ "$OSName" == "Mac" ]; then
-            # PyInstaller Onefile (.app)
-            if [ -d "dist/PyInstaller-Onefile.app" ]; then
-                cd dist && zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onefile.zip PyInstaller-Onefile.app && cd ..
-            fi
+            # Function to ensure a result is a bundle
+            ensure_bundle() {
+                local name=$1
+                local bundle="${name}.app"
+                if [ -d "$bundle" ]; then
+                    echo "Found bundle: $bundle"
+                elif [ -f "$name" ]; then
+                    echo "Found binary: $name. Creating minimal bundle..."
+                    mkdir -p "$bundle/Contents/MacOS"
+                    mv "$name" "$bundle/Contents/MacOS/"
+                    # Basic PList could go here if needed, but this is enough for zipping
+                else
+                    echo "Warning: Neither $name nor $bundle found."
+                fi
+            }
 
-            # PyInstaller Onedir (.app)
-            if [ -d "dist/PyInstaller-Onedir.app" ]; then
-                 cd dist && zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip PyInstaller-Onedir.app && cd ..
-            fi
+            # Prepare PyInstaller Onefile
+            cd dist
+            ensure_bundle "PyInstaller-Onefile"
+            zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onefile.zip PyInstaller-Onefile.app
+            cd ..
 
-            # Nuitka Onefile (.app)
-            if [ -d "Nuitka-Onefile.app" ]; then
-                 zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onefile.zip Nuitka-Onefile.app
-            fi
+            # Prepare PyInstaller Onedir
+            cd dist
+            ensure_bundle "PyInstaller-Onedir"
+            zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip PyInstaller-Onedir.app
+            cd ..
 
-            # Nuitka Onedir (.app)
+            # Prepare Nuitka Onefile
+            ensure_bundle "Nuitka-Onefile"
+            zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onefile.zip Nuitka-Onefile.app
+
+            # Prepare Nuitka Onedir
             if [ -d "Nuitka-Onedir.app" ]; then
-                 zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip Nuitka-Onedir.app
+                zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip Nuitka-Onedir.app
             elif [ -d "Nuitka-Onedir.dist" ]; then
-                 cd Nuitka-Onedir.dist && zip -r ../CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip . && cd ..
+                # Fallback: Zip the dist if no app bundle exists
+                cd Nuitka-Onedir.dist && zip -r ../CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip . && cd ..
             fi
         fi
 
