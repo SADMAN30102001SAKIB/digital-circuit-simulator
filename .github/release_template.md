@@ -15,22 +15,22 @@ We provide **8 different versions** to suit every need. Here is how to pick the 
 
 | File Name | OS | Engine | Type |
 | :--- | :--- | :--- | :--- |
-| `CircuitPro-Win-PyInstaller-Onedir.zip` | 🪟 Windows | **PyInstaller** | 📂 **Folder** (Fastest) |
-| `CircuitPro-Win-PyInstaller-Onefile.zip` | 🪟 Windows | **PyInstaller** | 📄 File (Smallest) |
-| `CircuitPro-Win-Nuitka-Onedir.zip` | 🪟 Windows | **Nuitka** (C++) | 📂 **Folder** |
-| `CircuitPro-Win-Nuitka-Onefile.zip` | 🪟 Windows | **Nuitka** (C++) | 📄 File |
-| `CircuitPro-Linux-PyInstaller-Onedir.zip` | 🐧 Linux | **PyInstaller** | 📂 **Folder** |
-| `CircuitPro-Linux-PyInstaller-Onefile.zip` | 🐧 Linux | **PyInstaller** | 📄 File |
-| `CircuitPro-Linux-Nuitka-Onedir.zip` | 🐧 Linux | **Nuitka** (C++) | 📂 **Folder** |
-| `CircuitPro-Linux-Nuitka-Onefile.zip` | 🐧 Linux | **Nuitka** (C++) | 📄 File |
-| `CircuitPro-Mac-PyInstaller-Onedir.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** |
-| `CircuitPro-Mac-PyInstaller-Onefile.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** (Single Executable Inside) |
-| `CircuitPro-Mac-Nuitka-Onedir.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** |
-| `CircuitPro-Mac-Nuitka-Onefile.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** (Single Executable Inside) |
+| `CircuitPlaygroundPro-Win-PyInstaller-Onedir.zip` | 🪟 Windows | **PyInstaller** | 📂 **Folder** |
+| `CircuitPlaygroundPro-Win-PyInstaller-Onefile.exe` | 🪟 Windows | **PyInstaller** | 📄 File |
+| `CircuitPlaygroundPro-Win-Nuitka-Onedir.zip` | 🪟 Windows | **Nuitka** (C++) | 📂 **Folder** |
+| `CircuitPlaygroundPro-Win-Nuitka-Onefile.exe` | 🪟 Windows | **Nuitka** (C++) | 📄 File |
+| `CircuitPlaygroundPro-Linux-PyInstaller-Onedir.zip` | 🐧 Linux | **PyInstaller** | 📂 **Folder** |
+| `CircuitPlaygroundPro-Linux-PyInstaller-Onefile` | 🐧 Linux | **PyInstaller** | 📄 File |
+| `CircuitPlaygroundPro-Linux-Nuitka-Onedir.zip` | 🐧 Linux | **Nuitka** (C++) | 📂 **Folder** |
+| `CircuitPlaygroundPro-Linux-Nuitka-Onefile` | 🐧 Linux | **Nuitka** (C++) | 📄 File |
+| `CircuitPlaygroundPro-Mac-PyInstaller-Onedir.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** |
+| `CircuitPlaygroundPro-Mac-PyInstaller-Onefile.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** |
+| `CircuitPlaygroundPro-Mac-Nuitka-Onedir.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** |
+| `CircuitPlaygroundPro-Mac-Nuitka-Onefile.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** |
 
 ---
 
-## 🎓 The "What & How": A Mini-Tutorial
+## 🎓 Onefile vs. Onedir (Primarily for Windows & Linux; on macOS, both variants appear identical while retaining their internal differences):
 
 ### 1. "Onedir" (Folder) vs. "Onefile" (Single Executable)
 *   **Onedir (Folder)**:

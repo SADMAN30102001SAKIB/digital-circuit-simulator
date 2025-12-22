@@ -121,8 +121,6 @@ def main(argv=None):
             default_path = Path(f"app{ext}")
             target_path = Path(f"{args.name}{ext}")
 
-            # Also check if it's already named correctly but might need moving (rare)
-            # and verify we don't overwrite target with itself
             if default_path.exists() and default_path != target_path:
                 if target_path.exists():
                     if target_path.is_dir():
@@ -141,6 +139,57 @@ def main(argv=None):
                             print(f"[WARNING] Could not rename {default_path}: {e}")
                         else:
                             time.sleep(1)
+
+        # Mac-specific Onefile "Rescue Bundle" logic
+        if is_mac and args.onefile:
+            # Nuitka --onefile --macos-create-app-bundle often produces just a binary file 'app' or '{name}'.
+            # We check if a bundle folder actually exists.
+            bundle_path = Path(f"{args.name}.app")
+            binary_path = Path(args.name)
+
+            if (
+                not bundle_path.exists()
+                and binary_path.exists()
+                and binary_path.is_file()
+            ):
+                print(f"[INFO] Wrapping {args.name} into a professional .app bundle...")
+                macos_dir = bundle_path / "Contents" / "MacOS"
+                resources_dir = bundle_path / "Contents" / "Resources"
+                macos_dir.mkdir(parents=True, exist_ok=True)
+                resources_dir.mkdir(parents=True, exist_ok=True)
+
+                # Move binary
+                shutil.move(str(binary_path), str(macos_dir / args.name))
+
+                # Add Icon if available
+                icon_source = Path("assets/icon.icns")
+                if icon_source.exists():
+                    shutil.copy(str(icon_source), str(resources_dir / "icon.icns"))
+
+                # Create minimal Info.plist
+                plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>{args.name}</string>
+    <key>CFBundleIconFile</key>
+    <string>icon.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.circuit-simulator.{args.name.lower()}</string>
+    <key>CFBundleName</key>
+    <string>{args.name}</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>3.1.2</string>
+</dict>
+</plist>
+"""
+                with open(bundle_path / "Contents" / "Info.plist", "w") as f:
+                    f.write(plist_content)
+
+                print(f"[SUCCESS] Hand-crafted .app bundle created at {bundle_path}")
 
         print(f"\n[SUCCESS] Build complete! Artifact name: {args.name}")
     except subprocess.CalledProcessError as e:

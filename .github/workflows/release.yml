@@ -135,62 +135,23 @@ jobs:
 
         # --- MAC HANDLING (All .app Bundles -> Zips) ---
         if [ "$OSName" == "Mac" ]; then
-            # Function to ensure a result is a bundle
-            # If it's a bundle, keep it.
-            # If it's a directory, rename to bundle/Contents/MacOS + contents
-            # If it's a file, wrap it in bundle/Contents/MacOS
-            ensure_bundle() {
-                local name=$1
-                local bundle="${name}.app"
-                if [ -d "$bundle" ]; then
-                    echo "Found bundle: $bundle"
-                elif [ -f "$name" ]; then
-                    echo "Found binary: $name. Creating bundle..."
-                    mkdir -p "$bundle/Contents/MacOS"
-                    mv "$name" "$bundle/Contents/MacOS/"
-                elif [ -d "$name" ]; then
-                    echo "Found directory: $name. Converting to bundle..."
-                    # Check if it already looks like a bundle internally
-                    if [ -d "$name/Contents/MacOS" ]; then
-                        mv "$name" "$bundle"
-                    else
-                        mkdir -p "$bundle/Contents/MacOS"
-                        mv "$name/"* "$bundle/Contents/MacOS/"
-                        rmdir "$name"
-                    fi
-                else
-                    echo "Warning: No build found for $name"
-                fi
-            }
-
+            # Just zip the resulting .app bundles. If they don't exist, the job fails fast.
+            
             # Prepare PyInstaller Onefile
-            pushd dist
-            ensure_bundle "PyInstaller-Onefile"
-            zip -r "../CircuitPlaygroundPro-$OSName-PyInstaller-Onefile.zip" "PyInstaller-Onefile.app"
-            popd
+            cd dist
+            zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onefile.zip PyInstaller-Onefile.app
+            cd ..
 
             # Prepare PyInstaller Onedir
-            pushd dist
-            ensure_bundle "PyInstaller-Onedir"
-            zip -r "../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip" "PyInstaller-Onedir.app"
-            popd
+            cd dist
+            zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip PyInstaller-Onedir.app
+            cd ..
 
             # Prepare Nuitka Onefile
-            ensure_bundle "Nuitka-Onefile"
-            [ -d "Nuitka-Onefile.app" ] && zip -r "CircuitPlaygroundPro-$OSName-Nuitka-Onefile.zip" "Nuitka-Onefile.app"
+            zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onefile.zip Nuitka-Onefile.app
 
             # Prepare Nuitka Onedir
-            ensure_bundle "Nuitka-Onedir"
-            # Nuitka might have made .dist AND .app, or renamed them.
-            # We look for the bundle first.
-            if [ -d "Nuitka-Onedir.app" ]; then
-                zip -r "CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip" "Nuitka-Onedir.app"
-            elif [ -d "Nuitka-Onedir.dist" ]; then
-                # Fallback conversion
-                mv "Nuitka-Onedir.dist" "Nuitka-Onedir"
-                ensure_bundle "Nuitka-Onedir"
-                zip -r "CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip" "Nuitka-Onedir.app"
-            fi
+            zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip Nuitka-Onedir.app
         fi
 
     - name: Upload Artifacts
@@ -205,6 +166,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
