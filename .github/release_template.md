@@ -23,6 +23,10 @@ We provide **8 different versions** to suit every need. Here is how to pick the 
 | `CircuitPro-Linux-PyInstaller-Onefile.zip` | 🐧 Linux | **PyInstaller** | 📄 File |
 | `CircuitPro-Linux-Nuitka-Onedir.zip` | 🐧 Linux | **Nuitka** (C++) | 📂 **Folder** |
 | `CircuitPro-Linux-Nuitka-Onefile.zip` | 🐧 Linux | **Nuitka** (C++) | 📄 File |
+| `CircuitPro-Mac-PyInstaller-Onedir.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** |
+| `CircuitPro-Mac-PyInstaller-Onefile.zip` | 🍎 MacOs | **PyInstaller** | 📂 **App Bundle** (Single Executable Inside) |
+| `CircuitPro-Mac-Nuitka-Onedir.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** |
+| `CircuitPro-Mac-Nuitka-Onefile.zip` | 🍎 MacOs | **Nuitka** (C++) | 📂 **App Bundle** (Single Executable Inside) |
 
 ---
 
@@ -61,6 +65,14 @@ We provide **8 different versions** to suit every need. Here is how to pick the 
     *   **GUI**: Right-click -> Properties -> Permissions -> Check **"Allow executing file as program"**. Then double-click.
     *   **Terminal**: `./CircuitPlaygroundPro`
     *   *Note: If it fails to run, you might need standard X11 libraries: `sudo apt install libxcb-cursor0` (or see BUILD_INSTRUCTIONS.md for a full list).*
+
+### On macOS 🍎
+1.  **Unzip** the archive.
+2.  You will see `CircuitPlaygroundPro` (App Bundle).
+3.  **Run it**:
+    *   **Drag to Applications** (Optional but recommended).
+    *   **Right-Click -> Open**.
+    *   *Note: If it says "App cannot be opened because the developer cannot be verified", click **Cancel**, then **Right-Click -> Open** again and click **Open**.*
 
 ---
 
