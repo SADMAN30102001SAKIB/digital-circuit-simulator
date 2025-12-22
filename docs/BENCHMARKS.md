@@ -2,9 +2,9 @@
 
 This document provides a deep dive into the size and performance of Circuit Playground Pro across different build configurations.
 
-## 📊 The "Extreme Engineering" Benchmarks (v3.1.1)
+## 📊 The "Extreme Engineering" Benchmarks (v3.1.2)
 
-This is the complete, line-for-line breakdown of every build combination tested during the v3.1.1 optimization sprint.
+This is the complete, line-for-line breakdown of every build combination tested during the v3.1.2 optimization sprint.
 
 > [!NOTE]
 > All detailed benchmarks below were performed on **Windows 11**. Linux builds are naturally larger (see Section 4).

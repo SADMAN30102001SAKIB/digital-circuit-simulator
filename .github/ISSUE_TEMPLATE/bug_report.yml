@@ -42,7 +42,7 @@ body:
       label: "Version"
       description: Which build of CircuitPro?
       options:
-        - v3.1.1
+        - v3.1.2
         - v3.0.0
         - Other (Manual Build)
     validations:

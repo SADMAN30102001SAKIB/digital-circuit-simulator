@@ -1,4 +1,4 @@
-# Circuit Playground Pro (v3.1.1)
+# Circuit Playground Pro (v3.1.2)
 
 Modern, professional logic circuit simulator built with **PySide6** (Qt for Python). Optimized for high-performance simulation and automated logic analysis.
 
@@ -116,7 +116,7 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 - [ ] **Sub-circuits (The "Chip" Builder)**: Enable modularity by allowing users to encapsulate circuits (like a 4-bit Adder) into reusable custom blocks.
 
 ## 📝 Project Details
-- **Version**: 3.1.1 (Professional Edition)
+- **Version**: 3.1.2 (Professional Edition)
 - **Engine**: PySide6 (Qt)
 - **Quality**: Verified by 38+ test cases & Ruff Linting (PEP 8)
 - **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
