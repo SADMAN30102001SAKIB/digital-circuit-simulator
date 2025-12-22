@@ -108,7 +108,9 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 **Result**: Professional-grade performance where analysis remains snappy even as circuit complexity grows exponentially.
 
 ## 🔮 Future Roadmap
-
+- [x] **Persistent Window State**: Stop resizing the window every time you open it.
+- [x] **Unified Resource Paths**: Centralized path resolution ensuring icons and data load perfectly whether running as a raw script, a PyInstaller bundle, or a Nuitka Native binary.
+- [x] **Professional Logging**: No more print() to hidden terminals - proper log file named `simulator.log` in the `save_files` directory of the application for debugging.
 - [ ] **Sequential Logic (Memory)**: Implement storage elements like **Flip-flops (D, JK, SR, T)**, Counters, and Shift Registers. Add a **Clock Input** component with configurable frequency to drive temporal logic.
 - [ ] **Waveform Analyzer**: A real-time logic analyzer to record and visualize signal transitions over time. Essential for debugging sequential logic, catching glitches, and measuring propagation delays.
 - [ ] **Sub-circuits (The "Chip" Builder)**: Enable modularity by allowing users to encapsulate circuits (like a 4-bit Adder) into reusable custom blocks.
@@ -116,7 +118,7 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 ## 📝 Project Details
 - **Version**: 3.1.0 (Professional Edition)
 - **Engine**: PySide6 (Qt)
-- **Quality**: Verified by 27+ tests & Ruff Linting (PEP 8)
+- **Quality**: Verified by 38+ test cases & Ruff Linting (PEP 8)
 - **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
 - **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
 - **Health**: 100% (Includes `MIT License`, `Code of Conduct`, and `Contribution Guidelines`)
