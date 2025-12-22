@@ -1,3 +1,4 @@
+import logging
 import platform
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont
@@ -285,10 +286,9 @@ class PropertyPanel(QDockWidget):
             finally:
                 self.target_gate = saved_gate
                 self.target_annotation = saved_annotation
-
         except Exception as e:
             # Non-fatal; pre-warm should never break normal startup
-            print("Warning: prewarm widgets failed:", e)
+            logging.warning(f"Prewarm widgets failed: {e}")
 
     def suspend_updates(self):
         """Suspend UI updates until resume_updates is called. Useful when showing a modal dialog."""

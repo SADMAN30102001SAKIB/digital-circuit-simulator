@@ -6,6 +6,7 @@ import simulator.persistence as persistence
 
 def setup_toolbar(sim):
     toolbar = QToolBar("Main Toolbar")
+    toolbar.setObjectName("MainToolbar")
     toolbar.setMovable(False)
     sim.addToolBar(toolbar)
 

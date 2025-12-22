@@ -1,6 +1,7 @@
+import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer, Slot, QStandardPaths
+from PySide6.QtCore import QSettings, QStandardPaths, Qt, QTimer, Slot
 from PySide6.QtWidgets import QDialog, QMainWindow, QMessageBox
 
 from assets.help_text import ABOUT_TEXT, HELP_TEXT
@@ -92,8 +93,8 @@ class CircuitSimulator(QMainWindow):
             self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             # Fallback if Documents folder is restricted or malformed
-            print(
-                f"Warning: Could not use Documents folder ({e}). Falling back to local 'save_files'."
+            logging.warning(
+                f"Could not use Documents folder ({e}). Falling back to local 'save_files'."
             )
             self.SAVE_DIR = Path("save_files")
             self.SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -144,16 +145,37 @@ class CircuitSimulator(QMainWindow):
         self.save_state()
         self.update_window_title()
 
+        # Restore window state
+        self.read_settings()
+
+    def read_settings(self):
+        """Restore window geometry and state from QSettings"""
+        settings = QSettings()
+        geom = settings.value("geometry")
+        if geom:
+            self.restoreGeometry(geom)
+        state = settings.value("windowState")
+        if state:
+            self.restoreState(state)
+
+    def write_settings(self):
+        """Save window geometry and state to QSettings"""
+        settings = QSettings()
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
+
     def _setup_ui(self):
         self.canvas = CircuitCanvas(self)
         self.setCentralWidget(self.canvas)
         self.canvas.scene.selectionChanged.connect(self._on_selection_changed)
 
         self.component_library = ComponentLibrary(self.COMPONENTS, self)
+        self.component_library.setObjectName("ComponentLibrary")
         self.addDockWidget(Qt.LeftDockWidgetArea, self.component_library)
         self.component_library.componentSelected.connect(self._on_component_selected)
 
         self.property_panel = PropertyPanel(self)
+        self.property_panel.setObjectName("PropertyPanel")
         self.addDockWidget(Qt.RightDockWidgetArea, self.property_panel)
         self.property_panel.actionTriggered.connect(self._on_property_action)
 
@@ -796,4 +818,7 @@ class CircuitSimulator(QMainWindow):
             if dialog.exec() != QDialog.Accepted:
                 event.ignore()
                 return
+
+        # Save window state before exiting
+        self.write_settings()
         event.accept()
