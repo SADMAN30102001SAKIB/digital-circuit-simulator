@@ -109,19 +109,40 @@ jobs:
         fi
 
         # PyInstaller Onefile
-        mv dist/PyInstaller-Onefile CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
+        if [ -d "dist/PyInstaller-Onefile.app" ]; then
+            # If it's an app bundle, grab the binary inside
+            mv dist/PyInstaller-Onefile.app/Contents/MacOS/PyInstaller-Onefile CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
+        else
+            # If it's a raw binary
+            mv dist/PyInstaller-Onefile CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
+        fi
         chmod +x CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
 
         # PyInstaller Onedir (Zip)
-        # Zip the CONTENTS of the folder, not the folder itself, to match standard conventions
-        cd dist/PyInstaller-Onedir && zip -r ../../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip . && cd ../..
+        # For Mac, we zip the .app bundle if it exists, roughly equivalent to onedir
+        if [ -d "dist/PyInstaller-Onedir.app" ]; then
+             cd dist && zip -r ../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip PyInstaller-Onedir.app && cd ..
+        else
+             cd dist/PyInstaller-Onedir && zip -r ../../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip . && cd ../..
+        fi
 
         # Nuitka Onefile
-        mv Nuitka-Onefile.bin CircuitPlaygroundPro-$OSName-Nuitka-Onefile || mv Nuitka-Onefile CircuitPlaygroundPro-$OSName-Nuitka-Onefile
+        # Nuitka with --macos-create-app-bundle makes Nuitka-Onefile.app
+        if [ -d "Nuitka-Onefile.app" ]; then
+             mv Nuitka-Onefile.app/Contents/MacOS/Nuitka-Onefile CircuitPlaygroundPro-$OSName-Nuitka-Onefile
+        else
+             mv Nuitka-Onefile.bin CircuitPlaygroundPro-$OSName-Nuitka-Onefile || mv Nuitka-Onefile CircuitPlaygroundPro-$OSName-Nuitka-Onefile
+        fi
         chmod +x CircuitPlaygroundPro-$OSName-Nuitka-Onefile
 
         # Nuitka Onedir (Zip)
-        cd Nuitka-Onedir.dist && zip -r ../CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip . && cd ..
+        # Nuitka Onedir is likely just the dist folder or an app bundle depending on flags
+        # Our script uses --macos-create-app-bundle for all mac builds, so likely Nuitka-Onedir.app or inside dist
+        if [ -d "Nuitka-Onedir.dist" ]; then
+             cd Nuitka-Onedir.dist && zip -r ../CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip . && cd ..
+        elif [ -d "Nuitka-Onedir.app" ]; then
+             zip -r CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip Nuitka-Onedir.app
+        fi
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4

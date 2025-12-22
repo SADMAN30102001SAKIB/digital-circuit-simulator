@@ -1,6 +1,6 @@
 {
   "name": "Circuit Playground Pro",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {}
   },
