@@ -28,10 +28,16 @@ def main():
     app.setOrganizationName("Circuit Simulator")
     app.setApplicationVersion("3.1.2")
 
-    # Set application icon
-    icon_path = get_resource_path("assets/icon.ico")
-    if icon_path.exists():
-        app.setWindowIcon(QIcon(str(icon_path)))
+    # Set application icon (Platform-specific priority)
+    icon_candidates = ["assets/icon.png", "assets/icon.icns", "assets/icon.ico"]
+    if sys.platform.startswith("win"):
+        icon_candidates = ["assets/icon.ico", "assets/icon.png"]
+
+    for icon_name in icon_candidates:
+        icon_path = get_resource_path(icon_name)
+        if icon_path.exists():
+            app.setWindowIcon(QIcon(str(icon_path)))
+            break
 
     # Set application-wide font with robust fallbacks
     font = QFont()

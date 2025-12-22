@@ -365,6 +365,13 @@ def main(argv=None):
                 f"exe = EXE(pyz, a.scripts, a.binaries, a.zipfiles, a.datas, name='{args.name}', debug=False, strip={strip_flag}, upx={upx_flag}, console=False, icon=r'{project_root_val}/assets/icon{icon_ext}')"
             )
 
+        if IS_MAC:
+            # On Mac, wrap the output in a BUNDLE target
+            target_obj = "coll" if args.onedir else "exe"
+            lines.append(
+                f"app = BUNDLE({target_obj}, name='{args.name}.app', icon=r'{project_root_val}/assets/icon{icon_ext}', bundle_identifier=None)"
+            )
+
         spec.write_text("\n".join(lines) + "\n")
         print(f"Wrote filtered spec to {spec}")
 
