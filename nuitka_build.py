@@ -98,8 +98,35 @@ def main(argv=None):
 
     try:
         subprocess.check_call(cmd)
+
+        # Post-build renaming for 'onedir' mode
+        if not args.onefile:
+            default_dist = Path("app.dist")
+            target_dist = Path(f"{args.name}.dist")
+            if target_dist.exists():
+                import shutil
+
+                shutil.rmtree(target_dist)
+
+            # Retry rename on Windows (file locking issues)
+            import time
+
+            for i in range(5):
+                try:
+                    default_dist.rename(target_dist)
+                    print(f"[INFO] Renamed build artifact to {target_dist}")
+                    break
+                except PermissionError:
+                    if i == 4:
+                        print(
+                            f"[WARNING] Could not rename {default_dist} to {target_dist}. Check permissions."
+                        )
+                        print(f"Build is located at: {default_dist}")
+                    else:
+                        time.sleep(1)
+
         print(
-            "\n[SUCCESS] Build complete! Check app.dist (or the executable in project root if onefile)"
+            f"\n[SUCCESS] Build complete! Check {args.name}.dist (onedir) or {args.name}.exe (onefile)"
         )
     except subprocess.CalledProcessError as e:
         print(f"\n[ERROR] Nuitka build failed with exit code {e.returncode}")

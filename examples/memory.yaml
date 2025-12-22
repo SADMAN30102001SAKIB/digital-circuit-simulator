@@ -1,0 +1,86 @@
+gates:
+- class: ORGate
+  uid: f090364b-cb51-4ba4-97f5-065344870bf0
+  x: -3.4802371470880296
+  y: -3.9774138823863154
+  rotation: 0
+  num_inputs: 2
+  num_outputs: null
+  select_bits: null
+  state: null
+  label: null
+- class: InputSwitch
+  uid: 94ffe0c1-8592-4796-b752-e0c9f5b69c17
+  x: -248.49438338916423
+  y: 54.51087078884842
+  rotation: 0
+  num_inputs: 2
+  num_outputs: null
+  select_bits: null
+  state: false
+  label: SET
+- class: ANDGate
+  uid: 97a8bc1b-f33b-43a3-86c0-5ef38078b3d6
+  x: -119.17204165562036
+  y: -60.14992638769482
+  rotation: 0
+  num_inputs: 2
+  num_outputs: null
+  select_bits: null
+  state: null
+  label: null
+- class: InputSwitch
+  uid: c479dad2-5415-4a72-b5e1-4d80b0738c47
+  x: -248.0940104416461
+  y: -28.704672683327736
+  rotation: 0
+  num_inputs: 2
+  num_outputs: null
+  select_bits: null
+  state: true
+  label: RESET
+- class: OutputLED
+  uid: 240c545b-6577-4458-aa35-5c87366ff1cf
+  x: 132.7057750928517
+  y: 53.007122629156065
+  rotation: 0
+  num_inputs: 2
+  num_outputs: null
+  select_bits: null
+  state: null
+  label: null
+annotations: []
+connections:
+- dest_gate: 0
+  dest_input: 0
+  src_gate: 2
+  src_output: 0
+- dest_gate: 0
+  dest_input: 1
+  src_gate: 1
+  src_output: 0
+- dest_gate: 2
+  dest_input: 0
+  src_gate: 0
+  src_output: 0
+  waypoints:
+  - - 110.14955269746613
+    - 26.315592794616485
+  - - 103.38268597885047
+    - -91.7286377412346
+  - - -145.48763445023684
+    - -82.70614878308038
+  - - -144.73576037039066
+    - -51.1274374295406
+- dest_gate: 2
+  dest_input: 1
+  src_gate: 3
+  src_output: 0
+- dest_gate: 4
+  dest_input: 0
+  src_gate: 0
+  src_output: 0
+settings:
+  canvas_size: 10000
+  grid_size: 20
+  sim_fps: 60

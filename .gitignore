@@ -4,13 +4,14 @@ venv/
 
 # Python cache
 **/__pycache__/
+.pytest_cache/
+.ruff_cache/
 
 # Build artifacts
-app.dist/
-app.build/
-app.onefile-build/
+*.dist/
+*.build/
+*.onefile-build/
 build/
 dist/
-CircuitPlaygroundPro
 *.spec
 *.exe

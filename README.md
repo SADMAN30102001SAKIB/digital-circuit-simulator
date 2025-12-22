@@ -18,6 +18,15 @@ Modern, professional logic circuit simulator built with **PySide6** (Qt for Pyth
   - **Advanced Gates**: MUX, DEMUX, Encoders, Decoders, and custom Annotations.
   - **Movable UI**: Floatable dock widgets for component library and property panels.
 
+
+## 📋 Prerequisites (Linux)
+To run or build the Linux version, you **must** install the X11/Qt dependencies. These are required for the application to render graphics and handle window events.
+
+**Graphical Dependencies:**
+```bash
+sudo apt update && sudo apt install -y --no-install-recommends libgl1 libegl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libxcb-shape0 libxcb-util1 libxcb-xinerama0 libxcb-xinput0 libopengl0
+```
+
 ## 📦 Installation & Usage
 > [!NOTE]
 > This project is optimized and tested for **Python 3.10 through 3.12**.
@@ -56,8 +65,14 @@ The project uses `pytest` and `pytest-qt` for high-integrity verification.
 ```bash
 # Install dependencies
 uv sync --extra test
-# Run all tests (headless)
-uv run python -m pytest tests/
+# Run all tests
+uv run python -m pytest tests
+
+# if you're on a headless server, you can run tests like this:
+# Linux/macOS (headless)
+QT_QPA_PLATFORM=offscreen uv run python -m pytest tests
+# Windows PowerShell (headless)
+$env:QT_QPA_PLATFORM="offscreen"; uv run python -m pytest tests
 ```
 
 ### 🧹 Quality Control (Linter)
@@ -69,12 +84,21 @@ uv run ruff check . --fix
 uv run ruff format .
 ```
 
-## 🏗️ Building Executable
+## 📚 Sample Circuits
 
-The project includes a robust build system to create small, standalone executables (~21MB) using PyInstaller or Nuitka.
+The `examples/` folder contains pre-built circuits you can load into the app:
 
-**📖 Documentation:**
-- **[BUILD_INSTRUCTIONS.md](docs/BUILD_INSTRUCTIONS.md)** - detailed build flags.
+### How to Use:
+Run the app at least once to create the save files directory. Then copy any `.yaml` file from `examples/` into the app's circuit folder:
+
+| OS | Circuit Folder Location |
+|----|------------------------|
+| **Windows** | `Documents\CircuitPlaygroundPro\circuits\` |
+| **macOS** | `~/Documents/CircuitPlaygroundPro/circuits/` |
+| **Linux** | `~/Documents/CircuitPlaygroundPro/circuits/` |
+| **Fallback** | `./save_files/circuits/` (`./` means app's root directory) |
+
+Then open the app and use **Ctrl+L** (or **Cmd+L** on Mac) to load it.
 
 ## 🎮 Controls & Shortcuts
 
@@ -85,6 +109,13 @@ The project includes a robust build system to create small, standalone executabl
 - **Q / E**: Rotate components
 - **Delete**: Remove selected item
 - **Escape**: Cancel wiring or selection
+
+## 🏗️ Building Executable
+
+The project includes a robust build system to create the smallest possible standalone executables (~21MB) using PyInstaller or Nuitka.
+
+**📖 Documentation:**
+- **[BUILD_INSTRUCTIONS.md](docs/BUILD_INSTRUCTIONS.md)** - detailed build flags.
 
 ## 🏗️ Architecture
 
@@ -118,7 +149,7 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 ## 📝 Project Details
 - **Version**: 3.1.2 (Professional Edition)
 - **Engine**: PySide6 (Qt)
-- **Quality**: Verified by 38+ test cases & Ruff Linting (PEP 8)
+- **Quality**: Verified by 57+ test cases & Ruff Linting (PEP 8)
 - **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
 - **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
 - **Health**: 100% (Includes `MIT License`, `Code of Conduct`, and `Contribution Guidelines`)

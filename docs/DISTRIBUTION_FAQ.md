@@ -24,7 +24,7 @@ Best for professional distribution or older PCs. **You must send the entire fold
 | Build Tool | Output Folder | Location |
 | :--- | :--- | :--- |
 | **PyInstaller** | `CircuitPlaygroundPro/` | `dist/` folder |
-| **Nuitka** | `app.dist/` | Project Root |
+| **Nuitka** | `CircuitPlaygroundPro.dist/` | Project Root |
 
 > [!IMPORTANT]
 > **Don't just send the executable from a folder build!** If you move the executable out of its folder alone, it will crash because it can't find its "internal" organs (DLLs). Always ZIP the whole folder before sending.

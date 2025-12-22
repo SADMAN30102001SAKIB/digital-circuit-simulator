@@ -12,6 +12,14 @@ Choose your build weapon:
 | **Standard (PyInstaller)** | Fast testing & smallest build sizes |
 | **Compiler (Nuitka)** | Best RAM performance & security |
 
+### 📋 Prerequisites (Linux & WSL2)
+
+**Build Dependencies (Nuitka only):**
+If you are using `nuitka_build.py` on Linux, you must install `patchelf` to allow the compiler to modify shared library paths in the standalone binary:
+```bash
+sudo apt install patchelf
+```
+
 ---
 
 ## 📦 Method 1: PyInstaller (Fast & Flexible)
@@ -44,25 +52,8 @@ This is the recommended way for most users.
     python build.py --spec-filter --exclude-qt
     ```
 
-### Find Output
-`dist/CircuitPlaygroundPro`
-
 > [!TIP]
 > `uv` saves disk space by using a global cache and hard-linking packages across projects instead of copying them!
-
-### 📋 Prerequisites (Linux & WSL2)
-To run or build the Linux version, you **must** install the X11/Qt dependencies. These are required for the application to render graphics and handle window events.
-
-**1. Graphical Dependencies:**
-```bash
-sudo apt update && sudo apt install libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libxcb-shape0 libxcb-util1
-```
-
-**2. Build Dependencies (Nuitka only):**
-If you are using `nuitka_build.py` on Linux, you must install `patchelf` to allow the compiler to modify shared library paths in the standalone binary:
-```bash
-sudo apt install patchelf
-```
 
 ### Onefile vs. Onedir: Which should you choose?
 
@@ -103,7 +94,7 @@ uv run --extra build build.py --spec-filter --exclude-qt --exclude-module pygame
 Nuitka translates your Python code into C++ and compiles it into a native binary. This results in **25% less RAM usage** and faster execution.
 
 ### Setup (One-time):
-1.  **Install build tools**: `pip install .[build]` or `uv sync --extra build`
+1.  **Install build tools**: `uv sync --extra build` or `pip install .[build]`
 > [!NOTE]
 > Nuitka will ask to download a C++ compiler on the first run. Just say 'Yes'.
 

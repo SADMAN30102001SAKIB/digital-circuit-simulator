@@ -41,6 +41,7 @@ jobs:
         sudo apt-get install -y \
           patchelf \
           ccache \
+          libgl1 \
           libegl1 \
           libopengl0 \
           libxcb-cursor0 \
@@ -60,42 +61,69 @@ jobs:
       if: runner.os == 'macOS'
       run: brew install ccache
 
-    - name: Run build script (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        uv run python build.py --exclude-qt --exclude-module pygame
-        uv run python nuitka_build.py --onefile --name CircuitPlaygroundPro-Native
+    # --- 1. PyInstaller Builds ---
+    - name: Build PyInstaller Onefile
+      run: uv run python build.py --onefile --spec-filter --exclude-qt --exclude-module pygame --name PyInstaller-Onefile
 
-    - name: Run build script (Unix)
+    - name: Build PyInstaller Onedir
+      run: uv run python build.py --onedir --spec-filter --exclude-qt --exclude-module pygame --name PyInstaller-Onedir
+
+    # --- 2. Nuitka Builds ---
+    - name: Build Nuitka Onefile
+      run: uv run python nuitka_build.py --onefile --name Nuitka-Onefile
+
+    - name: Build Nuitka Onedir
+      run: uv run python nuitka_build.py --onedir --name Nuitka-Onedir
+
+    # --- 3. Prepare & Rename Artifacts (Windows) ---
+    - name: Prepare Artifacts (Windows)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        $OSName = "Win"
+        
+        # PyInstaller Onefile
+        Move-Item -Path "dist\PyInstaller-Onefile.exe" -Destination "CircuitPlaygroundPro-$OSName-PyInstaller-Onefile.exe"
+        
+        # PyInstaller Onedir (Zip)
+        Compress-Archive -Path "dist\PyInstaller-Onedir\*" -DestinationPath "CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip"
+        
+        # Nuitka Onefile
+        Move-Item -Path "Nuitka-Onefile.exe" -Destination "CircuitPlaygroundPro-$OSName-Nuitka-Onefile.exe"
+        
+        # Nuitka Onedir (Zip)
+        # Nuitka script outputs to Nuitka-Onedir.dist
+        Compress-Archive -Path "Nuitka-Onedir.dist\*" -DestinationPath "CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip"
+
+    # --- 4. Prepare & Rename Artifacts (Unix) ---
+    - name: Prepare Artifacts (Linux/macOS)
       if: runner.os != 'Windows'
       run: |
-        uv run python build.py --spec-filter --exclude-qt --exclude-module pygame
-        uv run python nuitka_build.py --onefile --name CircuitPlaygroundPro-Native
+        if [ "${{ runner.os }}" == "Linux" ]; then
+            OSName="Linux"
+        else
+            OSName="Mac"
+        fi
 
-    - name: Prepare Artifact (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        move dist\CircuitPlaygroundPro.exe CircuitPlaygroundPro-Windows-${{ github.ref_name }}.exe
-        move CircuitPlaygroundPro-Native.exe CircuitPlaygroundPro-Native-Windows-${{ github.ref_name }}.exe
+        # PyInstaller Onefile
+        mv dist/PyInstaller-Onefile CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
+        chmod +x CircuitPlaygroundPro-$OSName-PyInstaller-Onefile
 
-    - name: Prepare Artifact (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-Linux-${{ github.ref_name }}
-        mv CircuitPlaygroundPro-Native CircuitPlaygroundPro-Native-Linux-${{ github.ref_name }}
-        chmod +x CircuitPlaygroundPro-*
+        # PyInstaller Onedir (Zip)
+        # Zip the CONTENTS of the folder, not the folder itself, to match standard conventions
+        cd dist/PyInstaller-Onedir && zip -r ../../CircuitPlaygroundPro-$OSName-PyInstaller-Onedir.zip . && cd ../..
 
-    - name: Prepare Artifact (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        mv dist/CircuitPlaygroundPro CircuitPlaygroundPro-macOS-${{ github.ref_name }}
-        mv CircuitPlaygroundPro-Native CircuitPlaygroundPro-Native-macOS-${{ github.ref_name }}
-        chmod +x CircuitPlaygroundPro-*
+        # Nuitka Onefile
+        mv Nuitka-Onefile.bin CircuitPlaygroundPro-$OSName-Nuitka-Onefile || mv Nuitka-Onefile CircuitPlaygroundPro-$OSName-Nuitka-Onefile
+        chmod +x CircuitPlaygroundPro-$OSName-Nuitka-Onefile
 
-    - name: Upload Artifact
+        # Nuitka Onedir (Zip)
+        cd Nuitka-Onedir.dist && zip -r ../CircuitPlaygroundPro-$OSName-Nuitka-Onedir.zip . && cd ..
+
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: binary-${{ matrix.os }}
+        name: artifacts-${{ matrix.os }}
         path: CircuitPlaygroundPro-*
         if-no-files-found: error
 

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 import PyInstaller.__main__
-import platform
+from ctypes.util import find_library
 
 # Identify Platform
 IS_WIN = sys.platform.startswith("win")
@@ -18,7 +18,7 @@ EXT = ".dll" if IS_WIN else (".dylib" if IS_MAC else ".so")
 
 def check_linux_dependencies():
     """Check for common Linux libraries that PySide6/Qt needs for X11."""
-    if IS_WIN or platform.system() == "Darwin":
+    if IS_WIN or IS_MAC:
         return
 
     needed = [
@@ -32,33 +32,42 @@ def check_linux_dependencies():
         "libxkbcommon-x11.so.0",
         "libxcb-shape.so.0",
         "libxcb-util.so.1",
+        "libGL.so.1",
+        "libEGL.so.1",
+        "libOpenGL.so.0",
+        "libxcb-xinerama.so.0",
+        "libxcb-xinput.so.0",
     ]
     missing = []
 
-    import shutil
-    import subprocess
-
     try:
-        # Try using ldconfig to see if they are in the cache
-        ld_output = subprocess.check_output(
-            ["ldconfig", "-p"], stderr=subprocess.STDOUT
-        ).decode()
+        # Try using ctypes to find the libraries
         for lib in needed:
-            if lib not in ld_output:
+            base = lib.replace(".so.0", "").replace(".so.1", "")
+            if not find_library(base):
                 missing.append(lib)
     except Exception:
-        # Fallback to shutil check if ldconfig fails
-        for lib in needed:
-            if not shutil.which(lib):
-                missing.append(lib)
+        # Fallback to ldconfig if ctypes fails
+        try:
+            ld_output = subprocess.check_output(
+                ["ldconfig", "-p"], stderr=subprocess.STDOUT
+            ).decode()
+            for lib in needed:
+                if lib not in ld_output:
+                    missing.append(lib)
+        except Exception:
+            # ldconfig not available (Alpine, non-Debian) - skip check
+            print(
+                "\033[93m⚠️  Could not verify Linux dependencies (ldconfig not found). Proceeding anyway.\033[0m"
+            )
+            return
 
     if missing:
         print(
-            "\n\033[93m⚠️  Warning: Missing Linux GUI dependencies on build machine!\033[0m"
+            "\n\033[93m⚠️  Warning: Build machine is missing common Qt/X11 libs. Your build may fail or produce a non-portable binary!\033[0m"
         )
-        print("Without these, your Linux executable might not run on other systems.")
         print(
-            "Run this to fix: \033[96msudo apt install libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libxcb-shape0 libxcb-util1\033[0m"
+            "Run this to fix: \033[96msudo apt install -y --no-install-recommends libgl1 libegl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-shm0 libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libxcb-shape0 libxcb-util1 libxcb-xinerama0 libxcb-xinput0 libopengl0\033[0m"
         )
         print("-" * 50 + "\n")
 
@@ -87,11 +96,6 @@ def main(argv=None):
         "--spec-filter",
         action="store_true",
         help="Generate and use a filtered spec that removes unneeded PySide6 binaries/plugins (aggressive)",
-    )
-    parser.add_argument(
-        "--keep-qt-dlls",
-        default="Qt6Core,Qt6Gui,Qt6Widgets,Qt6DBus",
-        help="Comma-separated Qt DLL names to keep (no .dll suffix)",
     )
     parser.add_argument(
         "--no-strip",
@@ -139,7 +143,7 @@ def main(argv=None):
         "--clean",
         "--noconfirm",
     ]
-    if not IS_WIN:
+    if not IS_WIN and args.strip:
         build_args.append("--strip")
 
     build_args.extend(
@@ -310,7 +314,7 @@ def main(argv=None):
         lines.append("# Aggressive post-analysis filtering")
         lines.append("if exclude_qt_flag:")
         lines.append(
-            "    ex_cl = ['qt6qml','qt6qmlmeta','qt6qmlmodels','qt6qmlworkerscript','qt6quick','qt6pdf','qt6webengine','qt6webenginecore','qt6svg','qsvg','qt6network','qt6opengl','qt6virtualkeyboard','qt6multimedia','qt6webchannel','qt6websockets','opengl32sw','qjpeg','qwebp','libcrypto-3','libcrypto','libssl','qtjpeg','qtwebp','qtiff','qicns','qwbmp','qtga','qgif','qminimal','qoffscreen','qdirect2d']"
+            "    ex_cl = ['qt6opengl','qt6qml','qt6qmlmeta','qt6qmlmodels','qt6qmlworkerscript','qt6quick','qt6pdf','qt6webengine','qt6webenginecore','qt6svg','qsvg','qt6network','qt6virtualkeyboard','qt6multimedia','qt6webchannel','qt6websockets','opengl32sw','qjpeg','qwebp','libcrypto-3','libcrypto','libssl','qtjpeg','qtwebp','qtiff','qicns','qwbmp','qtga','qgif','qminimal','qoffscreen','qdirect2d']"
         )
         lines.append(
             "    a.binaries = [b for b in a.binaries if not any(x in b[1].lower() for x in ex_cl)]"
