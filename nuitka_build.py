@@ -211,14 +211,12 @@ def main(argv=None):
                         text=True,
                     )
                     print(
-                        f"[SUCCESS] Ad-hoc signature applied. '_CodeSignature' folder generated."
+                        "[SUCCESS] Ad-hoc signature applied. '_CodeSignature' folder generated."
                     )
                 except subprocess.CalledProcessError as e:
                     print(f"[WARNING] Ad-hoc signing failed: {e.stderr}")
                 except FileNotFoundError:
-                    print(
-                        f"[WARNING] 'codesign' utility not found. Skipping signature."
-                    )
+                    print("[WARNING] 'codesign' utility not found. Skipping signature.")
 
         print(f"\n[SUCCESS] Build complete! Artifact name: {args.name}")
     except subprocess.CalledProcessError as e:
