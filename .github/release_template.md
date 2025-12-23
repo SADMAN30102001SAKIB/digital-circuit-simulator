@@ -81,4 +81,4 @@ We provide **12 different versions** to suit every need. Here is how to pick the
 ## ✨ Release Highlights
 *   **Audited Codebase**: 100% clean logic scan. Zero redundancy.
 *   **Virtual Truth Table**: Analyze 22 inputs (4M rows) with **0% RAM spike**.
-*   **Optimized Build**: Executable size reduced to **~22MB** (Windows Minimum).
+*   **Optimized Build**: Executable size reduced to **~22MB** (Nuitka Onefile for MacOs & Windows).

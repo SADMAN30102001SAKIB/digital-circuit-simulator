@@ -9,10 +9,10 @@ Choose your build weapon:
 
 | Method | Best For |
 | :--- | :--- |
-| **Standard (PyInstaller)** | Fast testing & smallest build sizes |
-| **Compiler (Nuitka)** | Best RAM performance & security |
+| **Standard (PyInstaller)** | Fast setup & quick builds times |
+| **Compiler (Nuitka)** | Memory Efficient & reliable builds |
 
-### 📋 Prerequisites (Linux & WSL2)
+### 📋 Prerequisites (Linux)
 
 **Build Dependencies (Nuitka only):**
 If you are using `nuitka_build.py` on Linux, you must install `patchelf` to allow the compiler to modify shared library paths in the standalone binary:
@@ -85,7 +85,11 @@ This is the recommended way for most users.
 ### 🏆 The "Surgical Build" (Pro Mode)
 If you want to hit the absolute minimum size, you can surgically exclude "ghost" dependencies like `pygame` that might be sitting in your environment:
 ```powershell
+# Onefile
 uv run --extra build build.py --spec-filter --exclude-qt --exclude-module pygame
+
+# Onedir
+uv run --extra build build.py --onedir --spec-filter --exclude-qt --exclude-module pygame
 ```
 
 ---

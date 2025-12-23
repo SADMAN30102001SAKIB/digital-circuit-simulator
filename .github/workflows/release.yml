@@ -73,15 +73,15 @@ jobs:
 
     - name: Build PyInstaller Onefile (Windows)
       if: runner.os == 'Windows'
-      run: uv run python build.py --onefile --exclude-module pygame --name PyInstaller-Onefile
+      run: uv run python build.py --onefile --exclude-qt --exclude-module pygame --name PyInstaller-Onefile
 
     - name: Build PyInstaller Onedir (Unix)
       if: runner.os != 'Windows'
-      run: uv run python build.py --onedir --spec-filter --exclude-qt --exclude-module pygame --name PyInstaller-Onedir
+      run: uv run python build.py --onedir --spec-filter --prune --exclude-qt --exclude-module pygame --name PyInstaller-Onedir
 
     - name: Build PyInstaller Onedir (Windows)
       if: runner.os == 'Windows'
-      run: uv run python build.py --onedir --exclude-qt --exclude-module pygame --name PyInstaller-Onedir
+      run: uv run python build.py --onedir --prune --exclude-qt --exclude-module pygame --name PyInstaller-Onedir
 
     # --- 2. Nuitka Builds ---
     - name: Build Nuitka Onefile

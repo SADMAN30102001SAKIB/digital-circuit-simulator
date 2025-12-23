@@ -167,8 +167,10 @@ def main(argv=None):
         for p in Path(".").iterdir():
             if p.is_dir() and "upx" in p.name.lower():
                 # Check for platform match or generic
-                if (IS_WIN and "win" in p.name.lower()) or (
-                    IS_LINUX and "linux" in p.name.lower()
+                if (
+                    (IS_WIN and "win" in p.name.lower())
+                    or (IS_LINUX and "linux" in p.name.lower())
+                    or (IS_MAC and "mac" in p.name.lower())
                 ):
                     # Note: On Mac, it's best to 'brew install upx'.
                     # This check is for power users who place a compiled upx binary in 'upx-mac'.
@@ -188,7 +190,9 @@ def main(argv=None):
         for mod in [
             "PySide6.QtQml",
             "PySide6.QtQuick",
+            "PySide6.QtQuickWidgets",
             "PySide6.QtPdf",
+            "PySide6.QtPdfWidgets",
             "PySide6.QtWebEngineCore",
             "PySide6.QtWebEngineWidgets",
             "PySide6.QtNetwork",
@@ -196,6 +200,30 @@ def main(argv=None):
             "PySide6.QtMultimedia",
             "PySide6.QtSvg",
             "PySide6.QtSvgWidgets",
+            "PySide6.QtCharts",
+            "PySide6.QtDataVisualization",
+            "PySide6.QtSensors",
+            "PySide6.QtPositioning",
+            "PySide6.QtNfc",
+            "PySide6.QtSerialPort",
+            "PySide6.QtSerialBus",
+            "PySide6.QtRemoteObjects",
+            "PySide6.QtScxml",
+            "PySide6.QtStateMachine",
+            "PySide6.Qt3DCore",
+            "PySide6.Qt3DRender",
+            "PySide6.QtHelp",
+            "PySide6.QtDesigner",
+            "PySide6.QtTest",
+            "PySide6.QtOpenGL",
+            "PySide6.QtOpenGLWidgets",
+            "PySide6.QtPrintSupport",
+            "PySide6.QtConcurrent",
+            "PySide6.QtVirtualKeyboard",
+            "PySide6.QtSql",
+            "PySide6.QtXml",
+            "PySide6.QtTextToSpeech",
+            "PySide6.QtLocation",
             "unittest",
             "pydoc",
             "email",
@@ -204,6 +232,12 @@ def main(argv=None):
             "html",
             "distutils",
             "setuptools",
+            "tkinter",
+            "asyncio",
+            "multiprocessing",
+            "lib2to3",
+            "pip",
+            "idlelib",
         ]:
             build_args.extend(["--exclude-module", mod])
 
@@ -259,19 +293,56 @@ def main(argv=None):
             excludes = [
                 "PySide6.QtQml",
                 "PySide6.QtQuick",
+                "PySide6.QtQuickWidgets",
                 "PySide6.QtPdf",
+                "PySide6.QtPdfWidgets",
                 "PySide6.QtQmlModels",
                 "PySide6.QtQuickControls2",
                 "PySide6.QtWebEngineCore",
+                "PySide6.QtWebEngineWidgets",
                 "PySide6.QtNetwork",
                 "PySide6.QtSvg",
                 "PySide6.QtSvgWidgets",
+                "PySide6.QtBluetooth",
+                "PySide6.QtMultimedia",
+                "PySide6.QtCharts",
+                "PySide6.QtDataVisualization",
+                "PySide6.QtSensors",
+                "PySide6.QtPositioning",
+                "PySide6.QtNfc",
+                "PySide6.QtSerialPort",
+                "PySide6.QtSerialBus",
+                "PySide6.QtRemoteObjects",
+                "PySide6.QtScxml",
+                "PySide6.QtStateMachine",
+                "PySide6.Qt3DCore",
+                "PySide6.Qt3DRender",
+                "PySide6.QtHelp",
+                "PySide6.QtDesigner",
+                "PySide6.QtTest",
+                "PySide6.QtOpenGL",
+                "PySide6.QtOpenGLWidgets",
+                "PySide6.QtPrintSupport",
+                "PySide6.QtConcurrent",
+                "PySide6.QtVirtualKeyboard",
+                "PySide6.QtSql",
+                "PySide6.QtXml",
+                "PySide6.QtTextToSpeech",
+                "PySide6.QtLocation",
                 "unittest",
                 "pydoc",
                 "email",
                 "http",
                 "xml",
                 "html",
+                "distutils",
+                "setuptools",
+                "tkinter",
+                "asyncio",
+                "multiprocessing",
+                "lib2to3",
+                "pip",
+                "idlelib",
             ]
 
         # Add user-requested exclusions to the spec
@@ -307,14 +378,15 @@ def main(argv=None):
             if IS_WIN
             else ""
         )
+        lines.append(f"manual_bins = {manual_bins}")
         lines.append(
-            f"a = Analysis([main_path], pathex=[project_root], binaries=[], datas=datas, hiddenimports=[], hookspath=[], excludes={excludes_literal}, runtime_hooks=[], {win_flags}cipher=block_cipher)"
+            f"a = Analysis([main_path], pathex=[project_root], binaries=manual_bins, datas=datas, hiddenimports=[], hookspath=[], excludes={excludes_literal}, runtime_hooks=[], {win_flags}cipher=block_cipher)"
         )
         lines.append("")
         lines.append("# Aggressive post-analysis filtering")
         lines.append("if exclude_qt_flag:")
         lines.append(
-            "    ex_cl = ['qt6opengl','qt6qml','qt6qmlmeta','qt6qmlmodels','qt6qmlworkerscript','qt6quick','qt6pdf','qt6webengine','qt6webenginecore','qt6svg','qsvg','qt6network','qt6virtualkeyboard','qt6multimedia','qt6webchannel','qt6websockets','opengl32sw','qjpeg','qwebp','libcrypto-3','libcrypto','libssl','qtjpeg','qtwebp','qtiff','qicns','qwbmp','qtga','qgif','qminimal','qoffscreen','qdirect2d']"
+            "    ex_cl = ['qt6opengl','qt6qml','qt6qmlmeta','qt6qmlmodels','qt6qmlworkerscript','qt6quick','qt6pdf','qt6webengine','qt6webenginecore','qt6svg','qsvg','qt6network','qt6virtualkeyboard','qt6multimedia','qt6webchannel','qt6websockets','opengl32sw','qjpeg','qwebp','libcrypto-3','libcrypto','libssl','qtjpeg','qtwebp','qtiff','qicns','qwbmp','qtga','qgif','qminimal','qoffscreen','qdirect2d','sql','designer','help','bluetooth','nfc','positioning','sensors','serialport','remoteobjects','charts','datavisualization','scxml','statemachine','3d','test','concurrent','printsupport','qtxml','texttospeech','location']"
         )
         lines.append(
             "    a.binaries = [b for b in a.binaries if not any(x in b[1].lower() for x in ex_cl)]"
@@ -326,18 +398,19 @@ def main(argv=None):
         lines.append("def is_allowed_pyside(name):")
         lines.append("    n = name.replace('\\\\','/').lower()")
         lines.append(
-            "    # Always keep core Qt libraries on Linux (they have complex symlinks)"
+            f"    if {IS_LINUX} and ('pyside6/qt' in n or 'pyside6/qt' in name):"
         )
         lines.append(
-            f"    if not {IS_WIN} and ('pyside6/qt' in n or 'pyside6/Qt' in name): return True"
+            "        if exclude_qt_flag and any(x in n for x in ['webengine', 'quick', 'qml', 'multimedia', 'network', 'opengl']): return False"
         )
+        lines.append("        return True")
         lines.append("    # Core libs and plugins across all platforms")
         lines.append("    if not 'pyside6' in n and not 'plugins' in n: return True")
         lines.append("    # Keep ONLY essential plugins")
         lines.append("    if n in [x.lower() for x in allowed_pyside]: return True")
         lines.append("    # Explicit Whitelist for standard logic")
         lines.append(
-            "    for plugin in ['plugins/platforms/', 'plugins/imageformats/qico', 'plugins/styles/']:"
+            "    for plugin in ['plugins/platforms/', 'plugins/imageformats/qico', 'plugins/imageformats/qpng', 'plugins/styles/']:"
         )
         lines.append("        if plugin in n: return True")
         lines.append("    # Core modules and extensions that MUST stay")
@@ -393,11 +466,20 @@ def main(argv=None):
 
     # Post-build pruning (only for directory builds)
     dist_path = Path("dist") / args.name
+    if IS_MAC:
+        # On Mac, the "directory" is the .app bundle itself
+        dist_path = Path("dist") / f"{args.name}.app"
+
     if args.onedir and args.prune:
         prune_script = Path(__file__).parent / "scripts" / "prune.py"
         if prune_script.exists():
-            print(f"Running prune script on {dist_path}")
-            subprocess.check_call([sys.executable, str(prune_script), str(dist_path)])
+            print(f"[JANITOR] Performing Forensic Sweep on {dist_path}...")
+            try:
+                subprocess.run(
+                    [sys.executable, str(prune_script), str(dist_path)], check=True
+                )
+            except Exception as e:
+                print(f"[WARNING] Janitor sweep failed: {e}")
 
     # Ad-hoc Code Signing for macOS
     if IS_MAC:
@@ -414,7 +496,6 @@ def main(argv=None):
                 print("Ad-hoc signature applied successfully.")
             except Exception as e:
                 print(f"Warning: Ad-hoc signing failed: {e}")
-            print("✅ Prune complete.")
 
     print(f"\n[SUCCESS] Build complete! Check dist/{args.name}")
 
