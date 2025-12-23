@@ -22,25 +22,12 @@ Windows literally crashed because I put a "Checkmark" emoji in the Nuitka logs.
 The most famous meme in our dev history: **"Invalid access to memory location."**
 - **Technical Problem**: I tried to apply aggressive optimization (`--strip` & `--spec-filter`) to the Windows PyInstaller build. While this works on Unix, Windows' **Control Flow Guard (CFG)** and memory protection (DEP/ASLR) saw the modified/stripped DLL headers as a security violation.
 - **The Autistic Moment**: Locally (where security might be more relaxed or cached), it worked. In production (Azure/GitHub runners), Windows decided the "lean" binary was a threat.
-- **The Solve**: I had to disable stripping and filtering for Windows. This gave it an extra 18MB of "original" DLL padding to ensure the memory headers stayed intact. **Final Stable Size: 39.5MB**.
+- **The Solve**: I had to disable stripping and filtering for Windows. This gave it an extra ~18MB of "original" DLL padding to ensure the memory headers stayed intact. **Final Stable Size: ~39.5MB**.
 
 ### 3. The "Permission Please" Prompt (Blocking Automation) 🛑
 While Linux/Mac robots just downloaded their dependencies (like `patchelf`) and kept working, the Windows Nuitka build stopped everything to ask a human: *"Is it okay to download Dependency Walker? [Yes]/No."* 
 - **Technical Problem**: Interactive prompts kill automated CI/CD pipelines.
 - **The Solve**: I used the `--assume-yes-for-downloads` flag to give the robot "Power of Attorney" over the Windows file system.
-
----
-
-## 📊 Final "Pain vs. Gain" Benchmarks
-
-| OS | Technology | Build Logic | Size |
-| :--- | :--- | :--- | :--- |
-| **Linux** | **Nuitka/PyInstaller** | Surgical Strip | 40MB/50MB |
-| **macOS** | **Nuitka/PyInstaller** | Surgical Strip | 21MB/31MB |
-| **Windows** | **Nuitka (Native)** | Native Compile | **22MB** |
-| **Windows** | PyInstaller (Stable) | Safe/Non-Strip | 39.5MB |
-
-**Verdict**: Nuitka is the clear winner & the only sane/time-saving option for Windows.
 
 ---
 

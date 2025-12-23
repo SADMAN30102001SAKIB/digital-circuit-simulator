@@ -1,13 +1,13 @@
 # Circuit Playground Pro (Polished Edition)
 
 **Professional Logic Simulator used for digital circuit design and analysis.**
-This release culminates a complete codebase audit, bringing optimized size (~22MB) & cross-platform compatibility. The entire codebase has been audited line-by-line for zero logical defects, ensuring a "flawless" simulation experience.
+This release culminates a complete codebase audit, bringing optimized sizes & cross-platform compatibility. The entire codebase has been audited line-by-line for zero logical defects, ensuring a "flawless" simulation experience.
 
 ---
 
-## 📥 Download Guide: Which file should I choose?
+## 📥 Download Guide: Which file should you choose?
 
-*   *NOTE: After the download completes, the browser might flag the file as "unsafe". Click "Keep" -> "Keep Anyway"*
+*   *NOTE: After the download completes, the browser might flag the file as "unsafe". Click "Keep" -> "3-dots on Delete" -> "Keep Anyway"*
 
 We provide **12 different versions** to suit every need. Here is how to pick the right one:
 
@@ -30,13 +30,13 @@ We provide **12 different versions** to suit every need. Here is how to pick the
 
 ---
 
-## 🎓 Onefile vs. Onedir (Primarily for Windows & Linux; on macOS, both variants appear identical while retaining their internal differences):
+## 🎓 Onefile vs. Onedir (will make sense for Windows & Linux; on macOS, both variants appear identical while retaining their internal differences):
 
 ### 1. "Onedir" (Folder) vs. "Onefile" (Single Executable)
 *   **Onedir (Folder)**:
     *   **What it is**: You unzip it, and you get a folder containing the main executable plus a bunch of internal files (DLLs, libraries).
     *   **Pros**: **Instant Startup** (0.1s). The OS loads libraries directly.
-    *   **Cons**: You must keep the folder together. **DO NOT** drag the `.exe` out of the folder, or it will break!
+    *   **Cons**: You must keep the folder together. **DO NOT** drag the `executable` out of the folder, or it will break!
 *   **Onefile**:
     *   **What it is**: Just one single standalone executable file.
     *   **Pros**: Super lightweight. Easy to share.
@@ -55,7 +55,9 @@ We provide **12 different versions** to suit every need. Here is how to pick the
 2.  Open the extracted folder.
 3.  **Onedir**: Double-click `CircuitPlaygroundPro.exe` inside the folder.
 4.  **Onefile**: Double-click the single file.
-    *   *Note: Windows SmartScreen might say "Unknown Publisher". Click "More Info" -> "Run Anyway". (This is normal for open-source apps)*
+> [!TIP]
+> **Windows SmartScreen** may show an "Unknown Publisher" warning. Click **More Info** -> **Run Anyway**.
+> If Windows Defender blocks the app from accessing your **Documents** folder, please see the unblocking steps in the `README.md`.
 
 ### On Linux 🐧
 1.  **Unzip** the archive.
@@ -64,7 +66,7 @@ We provide **12 different versions** to suit every need. Here is how to pick the
 4.  **Run it**:
     *   **GUI**: Right-click -> Properties -> Permissions -> Check **"Allow executing file as program"**. Then double-click.
     *   **Terminal**: `./CircuitPlaygroundPro`
-    *   *Note: If it fails to run, you might need standard X11 libraries: `sudo apt install libxcb-cursor0` (or see BUILD_INSTRUCTIONS.md for a full list).*
+    *   *Note: If it fails to run, you might need to install the standard X11/Qt dependencies (see `README.md`).*
 
 ### On macOS 🍎
 1.  **Unzip** the archive.

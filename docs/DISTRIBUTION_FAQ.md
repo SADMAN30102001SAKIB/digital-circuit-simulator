@@ -47,14 +47,6 @@ This sometimes gets created when you run `build.py`.
 
 - **One-File Delivery**: If using `--onefile`, you only need to send the single executable.
 - **Folder Delivery**: If using `--onedir`, you **MUST** send the entire folder. I recommend zipping it first (Right-click > Compress/Zip).
-- **User Permissions**: Saved circuits and settings are stored in the user's **Documents** folder:
-    - **Windows**: `C:\Users\<User>\Documents\CircuitPlaygroundPro`
-    - **macOS**: `/Users/<User>/Documents/CircuitPlaygroundPro`
-    - **Linux**: `/home/<User>/Documents/CircuitPlaygroundPro` (or your local Documents path)
-    
-    This ensures your files are safe and accessible even if you move the executable, and prevents OS security from blocking folder creation. 
-    
-    *Note: If the application cannot access your Documents folder (e.g., due to strict security settings), it will automatically fall back to a local `save_files` folder in the application's root directory.*
 
 ## 💡 Pro Tips
 
@@ -82,13 +74,8 @@ A: **Yes!** If you run the build scripts on those systems, you get native versio
 *   **macOS**: `CircuitPlaygroundPro.app` (App Bundle)
     - **Created By**: `build.py` or `nuitka_build.py`. This is the **actual program**.
     - **What is a `.app`?** It's a special folder that macOS displays as a single double-clickable icon.
-    - **What about `.dmg`?** The build scripts **do not** create a `.dmg`. A `.dmg` (Disk Image) is a "shipping container" that you create manually *after* the build to share the app professionally using a separate command-line tool (like `create-dmg` or macOS's built-in `Disk Utility`). Users open the `.dmg` to drag the `.app` into their Applications folder.
 
 *Note: Because we are building "Native" code, you must run the build on the target operating system (e.g., use a Mac to build for Mac).*
 
 **Q: How do I "Uninstall"?**
 A: Just delete the file or folder. No registry changes are made by this app.
-
-**📖 Back to [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md)**
-
----

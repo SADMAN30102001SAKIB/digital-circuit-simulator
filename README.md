@@ -99,6 +99,13 @@ Run the app at least once to create the save files directory. Then copy any `.ya
 | **Fallback** | `./save_files/circuits/` (`./` means app's root directory) |
 
 Then open the app and use **Ctrl+L** (or **Cmd+L** on Mac) to load it.
+    
+> [!TIP]
+> **Note**: If Windows Defender blocks the app from accessing your **Documents** folder (Controlled Folder Access), you can verify and unblock it easily:
+> 1. Search for **Windows Security** in the Start menu.
+> 2. Go to **Virus & threat protection** > **Protection history**.
+> 3. Under the **Protected folder access blocked** entry, find the app name.
+> 4. Click the **Actions** button and select **Allow on device**.
 
 ## 🎮 Controls & Shortcuts
 
@@ -152,6 +159,6 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 - **Quality**: Verified by 57+ test cases & Ruff Linting (PEP 8)
 - **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
 - **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
-- **Health**: 100% (Includes `MIT License`, [Security Policy](SECURITY.md), `Code of Conduct`, and `Contribution Guidelines`)
+- **Health**: 100% (Includes `MIT License`, `Security Policy`, `Code of Conduct`, and `Contribution Guidelines`)
 
 - **Persistence**: YAML structure with stable UIDs.

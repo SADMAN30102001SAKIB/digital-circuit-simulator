@@ -7,7 +7,7 @@ This document provides a deep dive into the size and performance of Circuit Play
 This is the complete, line-for-line breakdown of every build combination tested during the v3.1.3 optimization sprint.
 
 > [!NOTE]
-> All detailed benchmarks below were performed on **Windows 11**. Linux builds are naturally larger (see Section 4).
+> All detailed benchmarks below were performed on a local **Windows 11** machine. Unix builds are naturally larger (see Section 4).
 
 ### 🧪 PyInstaller: Onefile (Single Executable)
 The goal for onefile is portability. These benchmarks show the impact of **Spec-Filtering** and **UPX**.
@@ -68,12 +68,13 @@ You might notice Linux builds are consistently larger. This is normal and unavoi
 *   **Portable Runtime**: Nuitka/PyInstaller bundle a private copy of the C runtime for Linux compatibility, adding ~10MB overhead that Windows builds don't need.
 
 ### 5. Nuitka: The Performance King 👑
-While Disk Size is a tie, **Memory (RAM) Usage** is where the two methods diverge significantly.
+On Windows, Nuitka builds take almost similar `Disk Space` as PyInstaller (but on unix, Nuitka builds are surprisingly smaller). 
+But **Memory (RAM) Usage** is where the two methods diverge significantly.
 
 | Application State | PyInstaller Build | Nuitka Build | Efficiency Gain |
 | :--- | :--- | :--- | :--- |
-| **Idle / Startup** | ~68–71 MB | **~50–52 MB** | **~26% Reduction** |
-| **Generating Truth Table** | ~76–77 MB | **~57–60 MB** | **~25% Reduction** |
+| **Idle / Startup** | ~68–71 MB | **~50–52 MB** | **~26% Less** |
+| **Generating Truth Table** | ~76–77 MB | **~57–60 MB** | **~25% Less** |
 
 **The "Why"**: PyInstaller is a "Bundler" (it carries the code); Nuitka is a "Compiler" (it turns the code into machine language). Compiled code uses less RAM because it doesn't need to load the Python interpreter's "instruction manual" into memory while it runs.
 
@@ -82,6 +83,6 @@ While Disk Size is a tie, **Memory (RAM) Usage** is where the two methods diverg
 ## 🏆 Final Verdict
 
 *   **For Development**: Use `build.py`. It's fast (30 sec) and very flexible.
-*   **For Distribution**: Use `build.py --spec-filter --exclude-qt --exclude-module pygame` (~21MB) or **Nuitka** for the best RAM performance.
+*   **For Distribution**: Use **Nuitka** for the best RAM performance.
 
 **📖 Full distribution tips: [DISTRIBUTION_FAQ.md](DISTRIBUTION_FAQ.md)**
