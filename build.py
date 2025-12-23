@@ -409,9 +409,16 @@ def main(argv=None):
         lines.append("    # Keep ONLY essential plugins")
         lines.append("    if n in [x.lower() for x in allowed_pyside]: return True")
         lines.append("    # Explicit Whitelist for standard logic")
-        lines.append(
-            "    for plugin in ['plugins/platforms/', 'plugins/imageformats/qico', 'plugins/imageformats/qpng', 'plugins/styles/']:"
-        )
+        # Strict whitelist to match prune.py logic
+        strict_plugins = ["plugins/imageformats/qico", "plugins/imageformats/qpng"]
+        if IS_WIN:
+            strict_plugins.extend(["plugins/platforms/qwindows", "plugins/styles/qwindowsvistastyle"])
+        elif IS_MAC:
+            strict_plugins.extend(["plugins/platforms/qcocoa", "plugins/styles/qmacstyle"])
+        elif IS_LINUX:
+            strict_plugins.extend(["plugins/platforms/qxcb", "plugins/platforms/libqxcb"])
+            
+        lines.append(f"    for plugin in {strict_plugins}:")
         lines.append("        if plugin in n: return True")
         lines.append("    # Core modules and extensions that MUST stay")
         lines.append("    base = n.split('/')[-1]")
