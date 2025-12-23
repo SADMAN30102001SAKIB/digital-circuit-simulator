@@ -68,7 +68,8 @@ def main(argv=None):
         f"--output-filename={args.name}",
         "--enable-plugin=pyside6",
         # Restrict Qt Plugins to Essentials (Huge size saver)
-        "--include-qt-plugins=platforms,styles,imageformats",
+        # 'styles' is strictly for Windows (qwindowsvistastyle). Mac/Linux use platform themes/built-ins.
+        f"--include-qt-plugins=platforms,imageformats{',styles' if is_win else ''}",
         # Explicitly exclude "Ghost" modules found in the mac's app audit
         "--nofollow-import-to=PySide6.QtQml,PySide6.QtQuick,PySide6.QtQuickWidgets,PySide6.QtNetwork,PySide6.QtPdf,PySide6.QtPdfWidgets,PySide6.QtVirtualKeyboard,PySide6.QtOpenGL,PySide6.QtOpenGLWidgets,PySide6.QtSql,PySide6.QtWebEngineCore,PySide6.QtWebEngineWidgets,PySide6.QtSvg,PySide6.QtSvgWidgets,PySide6.QtMultimedia,PySide6.QtCharts,PySide6.QtDataVisualization,PySide6.QtSensors,PySide6.QtPositioning,PySide6.QtNfc,PySide6.QtSerialPort,PySide6.QtSerialBus,PySide6.QtRemoteObjects,PySide6.QtScxml,PySide6.QtStateMachine,PySide6.Qt3DCore,PySide6.Qt3DRender,PySide6.QtHelp,PySide6.QtDesigner,PySide6.QtTest,PySide6.QtPrintSupport,PySide6.QtConcurrent,PySide6.QtBluetooth,PySide6.QtXml,PySide6.QtTextToSpeech,PySide6.QtLocation",
         # Universal Standard Library Exclusions (Size savers)
