@@ -152,6 +152,6 @@ The **v3.x.x Advanced Audit Edition** completely re-engineered the analysis engi
 - **Quality**: Verified by 57+ test cases & Ruff Linting (PEP 8)
 - **Continuous Delivery**: **[Windows vs. The World](docs/CD_CASE_STUDY.md)** - A technical case study on why development on Linux feels like magic while Windows feels like a haunted toaster.
 - **Continuous Integration**: Automated tests on Windows, Linux, and macOS via GitHub Actions.
-- **Health**: 100% (Includes `MIT License`, `Code of Conduct`, and `Contribution Guidelines`)
+- **Health**: 100% (Includes `MIT License`, [Security Policy](SECURITY.md), `Code of Conduct`, and `Contribution Guidelines`)
 
 - **Persistence**: YAML structure with stable UIDs.
